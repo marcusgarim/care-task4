@@ -1,0 +1,15 @@
+{
+    "name": "clinic/medical-assistant",
+    "description": "Sistema de Assistente Virtual Médico",
+    "type": "project",
+    "require": {
+        "php": ">=8.1",
+        "vlucas/phpdotenv": "^5.5",
+        "guzzlehttp/guzzle": "^7.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    }
+}

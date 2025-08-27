@@ -1,0 +1,21 @@
+[0;1;32m●[0m lshttpd.service - OpenLiteSpeed HTTP Server
+     Loaded: loaded (]8;;file://srv882583.dotsdigital.com.br/usr/lib/systemd/system/lshttpd.service/usr/lib/systemd/system/lshttpd.service]8;;; [0;1;32menabled[0m; preset: [0;1;38;5;185mdisabled[0m)
+     Active: [0;1;32mactive (running)[0m since Fri 2025-08-08 15:35:30 UTC; 52s ago
+    Process: 259111 ExecStart=/usr/local/lsws/bin/lswsctrl start (code=exited, status=0/SUCCESS)
+   Main PID: 259295 (litespeed)
+     CGroup: /system.slice/lshttpd.service
+             ├─[0;38;5;245m259130 lsphp[0m
+             ├─[0;38;5;245m259131 lsphp[0m
+             ├─[0;38;5;245m259132 lsphp[0m
+             ├─[0;38;5;245m259133 lsphp[0m
+             ├─[0;38;5;245m259134 lsphp[0m
+             ├─[0;38;5;245m259295 "openlitespeed (lshttpd - main)"[0m
+             ├─[0;38;5;245m259296 "openlitespeed (lscgid)"[0m
+             ├─[0;38;5;245m259297 "openlitespeed (lshttpd - #01)"[0m
+             ├─[0;38;5;245m259298 "openlitespeed (lshttpd - #02)"[0m
+             ├─[0;38;5;245m259299 "openlitespeed (lshttpd - #03)"[0m
+             └─[0;38;5;245m259300 "openlitespeed (lshttpd - #04)"[0m
+
+Aug 08 15:35:27 srv882583.dotsdigital.com.br systemd[1]: Starting OpenLiteSpeed HTTP Server...
+Aug 08 15:35:27 srv882583.dotsdigital.com.br lswsctrl[259111]: [OK] Send SIGUSR1 to 258500
+Aug 08 15:35:30 srv882583.dotsdigital.com.br systemd[1]: Started OpenLiteSpeed HTTP Server.
