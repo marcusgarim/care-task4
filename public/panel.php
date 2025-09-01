@@ -12,26 +12,26 @@
         <!-- Header -->
         <header class="panel-header">
             <div class="header-content">
-                <h1>⚙️ Painel Administrativo</h1>
-                <button class="back-btn" onclick="window.location.href='chat.php'">← Voltar ao Chat</button>
+                <h1>Painel Administrativo</h1>
+                <button class="back-btn" onclick="window.location.href='chat.php'">Voltar ao Chat</button>
             </div>
         </header>
 
         <!-- Tabs Navigation -->
         <nav class="tabs-nav">
-            <button class="tab-nav-btn prev" onclick="scrollTabs('prev')" title="Anterior">‹</button>
+            <button class="tab-nav-btn prev" onclick="scrollTabs('prev')" title="Anterior">Anterior</button>
             <div class="tabs-container">
-                <button class="tab-btn active" data-tab="configuracoes">📋 Configurações</button>
-                <button class="tab-btn" data-tab="profissionais">👨‍⚕️ Profissionais</button>
-                <button class="tab-btn" data-tab="servicos">🩺 Serviços</button>
-                <button class="tab-btn" data-tab="convenios">🏥 Convênios</button>
-                <button class="tab-btn" data-tab="horarios">🕐 Horários</button>
-                <button class="tab-btn" data-tab="agenda">📅 Exceções Agenda</button>
-                <button class="tab-btn" data-tab="faq">❓ FAQ</button>
-                <button class="tab-btn" data-tab="pagamentos">💳 Pagamentos</button>
-                <button class="tab-btn" data-tab="parceiros">🤝 Parceiros</button>
+                <button class="tab-btn active" data-tab="configuracoes">Configurações</button>
+                <button class="tab-btn" data-tab="profissionais">Profissionais</button>
+                <button class="tab-btn" data-tab="servicos">Serviços</button>
+                <button class="tab-btn" data-tab="convenios">Convênios</button>
+                <button class="tab-btn" data-tab="horarios">Horários</button>
+                <button class="tab-btn" data-tab="agenda">Exceções Agenda</button>
+                <button class="tab-btn" data-tab="faq">FAQ</button>
+                <button class="tab-btn" data-tab="pagamentos">Pagamentos</button>
+                <button class="tab-btn" data-tab="parceiros">Parceiros</button>
             </div>
-            <button class="tab-nav-btn next" onclick="scrollTabs('next')" title="Próximo">›</button>
+            <button class="tab-nav-btn next" onclick="scrollTabs('next')" title="Próximo">Próximo</button>
         </nav>
 
         <!-- Tab Content -->

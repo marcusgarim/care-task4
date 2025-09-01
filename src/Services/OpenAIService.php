@@ -607,14 +607,14 @@ class OpenAIService {
                         $this->logger->debug('Erro ao buscar endereço: ' . $e->getMessage());
                     }
                     
-                    $response = "✅ Agendamento confirmado!\n\n";
-                    $response .= "📅 Data: {$agendamento['data_formatada']} ({$agendamento['dia_semana']})\n";
-                    $response .= "⏰ Horário: {$agendamento['hora_formatada']}\n";
-                    $response .= "👨‍⚕️ Paciente: {$agendamento['nome_paciente']}\n";
-                    $response .= "📍 Local: {$endereco}\n\n";
+                    $response = "Agendamento confirmado!\n\n";
+                    $response .= "Data: {$agendamento['data_formatada']} ({$agendamento['dia_semana']})\n";
+                    $response .= "Horário: {$agendamento['hora_formatada']}\n";
+                    $response .= "Paciente: {$agendamento['nome_paciente']}\n";
+                    $response .= "Local: {$endereco}\n\n";
                     $response .= "Anotei tudo certinho! Até lá!";
                 } else {
-                    $response = "✅ Agendamento confirmado com sucesso!";
+                    $response = "Agendamento confirmado com sucesso!";
                 }
                 $this->logger->debug('criar_agendamento: ' . $response);
                 $this->logger->debug('criar_agendamento - args recebidos: ' . json_encode($args));

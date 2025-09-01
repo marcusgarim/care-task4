@@ -207,11 +207,11 @@ class ChatController
                     $configuracoes = $this->functions->buscar_configuracoes_clinica();
                     $endereco = $configuracoes['endereco'] ?? 'Rua das Flores, 123 - Centro';
                     
-                    $respostaFinal = "✅ Agendamento confirmado!\n\n";
-                    $respostaFinal .= "📅 Data: {$agendamento['data_formatada']} ({$agendamento['dia_semana']})\n";
-                    $respostaFinal .= "⏰ Horário: {$agendamento['hora_formatada']}\n";
-                    $respostaFinal .= "👨‍⚕️ Paciente: {$agendamento['nome_paciente']}\n";
-                    $respostaFinal .= "📍 Local: {$endereco}\n\n";
+                    $respostaFinal = "Agendamento confirmado!\n\n";
+                    $respostaFinal .= "Data: {$agendamento['data_formatada']} ({$agendamento['dia_semana']})\n";
+                    $respostaFinal .= "Horário: {$agendamento['hora_formatada']}\n";
+                    $respostaFinal .= "Paciente: {$agendamento['nome_paciente']}\n";
+                    $respostaFinal .= "Local: {$endereco}\n\n";
                     $respostaFinal .= "Anotei tudo certinho! Até lá!";
                     
                     error_log("[FINAL_RESPONSE] Usando resposta formatada para criar_agendamento");

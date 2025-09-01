@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Clínica Inteligente</title>
+    <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
+    <link rel="stylesheet" href="assets/css/chat.css">
+</head>
+<body>
+    <div id="particles-bg"></div>
+    
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="header-content">
+                <div class="header-text">
+                    <h1>Assistente Virtual</h1>
+                    <p>Clínica Médica</p>
+                </div>
+                <div class="header-buttons">
+                    <button class="panel-btn" id="panelBtn">Painel</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <input 
+                type="text" 
+                id="messageInput" 
+                placeholder="Digite sua mensagem..." 
+                autocomplete="off"
+            >
+            <button id="sendButton">
+                <svg width="24" height="24" viewBox="0 0 24 24">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+    
+    <div class="debug-panel" id="debugPanel">
+        <div class="debug-header">
+            <h3>Debug Console</h3>
+            <button id="toggleDebug">v</button>
+        </div>
+        <div class="debug-content" id="debugContent">
+            <div class="debug-stats">
+                <span>Tokens: <strong id="totalTokens">0</strong></span>
+                <span>Custo: <strong id="totalCost">R$ 0,00</strong></span>
+            </div>
+            <div class="debug-logs" id="debugLogs"></div>
+            <div class="debug-actions">
+                <button id="clearLogs">Limpar</button>
+                <button id="exportLogs">Exportar</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="assets/js/chat.js"></script>
+</body>
+</html>

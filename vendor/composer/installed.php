@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'clinic/medical-assistant',
-        'pretty_version' => '1.0.0+no-version-set',
-        'version' => '1.0.0.0',
-        'reference' => null,
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
+        'reference' => '99e65f8a26bec77ca75b5193f4fc59c58e87285e',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,9 +11,9 @@
     ),
     'versions' => array(
         'clinic/medical-assistant' => array(
-            'pretty_version' => '1.0.0+no-version-set',
-            'version' => '1.0.0.0',
-            'reference' => null,
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => '99e65f8a26bec77ca75b5193f4fc59c58e87285e',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

@@ -144,12 +144,8 @@ function formatMessage(message) {
     // Detecta e formata listas
     message = message.replace(/^- (.+)$/gm, '• $1');
     
-    // Detecta emojis de confirmação
-    message = message.replace(/✅/g, '<span style="font-size: 1.2em">✅</span>');
-    message = message.replace(/📅/g, '<span style="font-size: 1.2em">📅</span>');
-    message = message.replace(/⏰/g, '<span style="font-size: 1.2em">⏰</span>');
-    message = message.replace(/👨‍⚕️/g, '<span style="font-size: 1.2em">👨‍⚕️</span>');
-    message = message.replace(/📍/g, '<span style="font-size: 1.2em">📍</span>');
+    // Removido uso de emojis; manter apenas texto puro
+    message = message.replace(/[✅📅⏰👨‍⚕️📍]/g, '');
     
     return message;
 }
@@ -159,15 +155,15 @@ function createFeedbackButtons(messageId) {
     feedbackDiv.className = 'feedback-buttons';
     
     const likeBtn = document.createElement('button');
-    likeBtn.innerHTML = '👍 Útil';
+    likeBtn.innerHTML = 'Útil';
     likeBtn.onclick = () => handleFeedback(messageId, 'positivo', likeBtn);
     
     const dislikeBtn = document.createElement('button');
-    dislikeBtn.innerHTML = '👎 Não útil';
+    dislikeBtn.innerHTML = 'Não útil';
     dislikeBtn.onclick = () => handleFeedback(messageId, 'negativo', dislikeBtn);
     
     const rewriteBtn = document.createElement('button');
-    rewriteBtn.innerHTML = '✏️ Reescrever';
+    rewriteBtn.innerHTML = 'Reescrever';
     rewriteBtn.onclick = () => showRewriteModal(messageId);
     
     feedbackDiv.appendChild(likeBtn);
@@ -440,7 +436,7 @@ function addNewConversationButton() {
         const newBtn = document.createElement('button');
         newBtn.id = 'newConversationBtn';
         newBtn.className = 'new-conversation-btn';
-        newBtn.textContent = '🔄 Nova Conversa';
+        newBtn.textContent = 'Nova Conversa';
         newBtn.onclick = startNewConversation;
         headerButtons.appendChild(newBtn);
     }
