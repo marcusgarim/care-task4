@@ -62,7 +62,7 @@ function sendMessage() {
     addDebugLog('Enviando mensagem', { message, sessionId });
     
     // Envia para o servidor
-    fetch('api/chat.php', {
+    fetch('http://127.0.0.1:8000/api/chat', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -179,8 +179,8 @@ function handleFeedback(messageId, feedbackType, button) {
     buttons.forEach(btn => btn.classList.remove('active'));
     button.classList.add('active');
     
-    // Envia feedback para o servidor
-    fetch('api/feedback.php', {
+    // Envia feedback para o servidor (FastAPI)
+    fetch('http://127.0.0.1:8000/api/feedback', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -225,7 +225,7 @@ function showRewriteModal(messageId) {
 function saveRewrite(messageId) {
     const rewrittenText = document.getElementById('rewriteText').value;
     
-    fetch('api/rewrite.php', {
+    fetch('http://127.0.0.1:8000/api/rewrite', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -310,7 +310,7 @@ function updateStats(tokens) {
 }
 
 function fetchExchangeRate() {
-    fetch('api/exchange-rate.php')
+    fetch('http://127.0.0.1:8000/api/exchange-rate')
         .then(response => response.json())
         .then(data => {
             if (data.success) {

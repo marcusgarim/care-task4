@@ -1,6 +1,7 @@
 // Variáveis globais
 let currentTab = 'configuracoes';
 let currentEditId = null;
+const API_BASE = 'http://127.0.0.1:8000/api';
 
 // Função para aplicar máscara de moeda
 function applyCurrencyMask(input) {
@@ -99,7 +100,7 @@ function switchTab(tabName) {
 // ===== CONFIGURAÇÕES =====
 async function loadConfiguracoes() {
     try {
-        const response = await fetch('api/panel/configuracoes.php', {
+        const response = await fetch(`${API_BASE}/panel/configuracoes`, {
             method: 'GET'
         });
 
@@ -136,7 +137,7 @@ async function handleConfigSubmit(e) {
     }
 
     try {
-        const response = await fetch('api/panel/configuracoes.php', {
+        const response = await fetch(`${API_BASE}/panel/configuracoes`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -173,7 +174,7 @@ async function loadAllData() {
 // ===== PROFISSIONAIS =====
 async function loadProfissionais() {
     try {
-        const response = await fetch('api/panel/profissionais.php');
+        const response = await fetch(`${API_BASE}/panel/profissionais`);
         const data = await response.json();
 
         if (data.success) {
@@ -209,7 +210,7 @@ function renderProfissionaisTable(profissionais) {
 // ===== SERVIÇOS =====
 async function loadServicos() {
     try {
-        const response = await fetch('api/panel/servicos.php');
+        const response = await fetch(`${API_BASE}/panel/servicos`);
         const data = await response.json();
 
         if (data.success) {
@@ -255,7 +256,7 @@ function renderServicosTable(servicos) {
 // ===== CONVÊNIOS =====
 async function loadConvenios() {
     try {
-        const response = await fetch('api/panel/convenios.php');
+        const response = await fetch(`${API_BASE}/panel/convenios`);
         const data = await response.json();
 
         if (data.success) {
@@ -293,7 +294,7 @@ function renderConveniosTable(convenios) {
 // ===== HORÁRIOS =====
 async function loadHorarios() {
     try {
-        const response = await fetch('api/panel/horarios.php');
+        const response = await fetch(`${API_BASE}/panel/horarios`);
         const data = await response.json();
 
         if (data.success) {
@@ -359,7 +360,7 @@ function renderHorariosTable(horarios) {
 // ===== EXCEÇÕES DA AGENDA =====
 async function loadExcecoes() {
     try {
-        const response = await fetch('api/panel/excecoes.php');
+        const response = await fetch(`${API_BASE}/panel/excecoes`);
         const data = await response.json();
 
         if (data.success) {
@@ -399,7 +400,7 @@ function renderExcecoesTable(excecoes) {
 // ===== FAQ =====
 async function loadFaq() {
     try {
-        const response = await fetch('api/panel/faq.php');
+        const response = await fetch(`${API_BASE}/panel/faq`);
         const data = await response.json();
 
         if (data.success) {
@@ -435,7 +436,7 @@ function renderFaqTable(faq) {
 // ===== PAGAMENTOS =====
 async function loadPagamentos() {
     try {
-        const response = await fetch('api/panel/pagamentos.php');
+        const response = await fetch(`${API_BASE}/panel/pagamentos`);
         const data = await response.json();
 
         if (data.success) {
@@ -471,7 +472,7 @@ function renderPagamentosTable(pagamentos) {
 // ===== PARCEIROS =====
 async function loadParceiros() {
     try {
-        const response = await fetch('api/panel/parceiros.php');
+        const response = await fetch(`${API_BASE}/panel/parceiros`);
         const data = await response.json();
 
         if (data.success) {
@@ -676,7 +677,7 @@ async function handleProfissionalSubmit(id = null) {
 
 
     try {
-        const url = 'api/panel/profissionais.php';
+        const url = `${API_BASE}/panel/profissionais`;
         const method = id ? 'PUT' : 'POST';
 
         if (id) {
@@ -717,7 +718,7 @@ async function deleteProfissional(id) {
     }
 
     try {
-        const response = await fetch('api/panel/profissionais.php', {
+        const response = await fetch(`${API_BASE}/panel/profissionais`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -872,7 +873,7 @@ async function getServicoById(id) {
     try {
         console.log('Buscando serviço com ID:', id);
         // Buscar dados completos do servidor
-        const response = await fetch(`api/panel/servicos.php?id=${id}`);
+        const response = await fetch(`${API_BASE}/panel/servicos?id=${id}`);
         console.log('Response status:', response.status);
         
         const data = await response.json();
@@ -919,7 +920,7 @@ async function handleServicoSubmit(id = null) {
     }
 
     try {
-        const response = await fetch('api/panel/servicos.php', {
+        const response = await fetch(`${API_BASE}/panel/servicos`, {
             method: id ? 'PUT' : 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -952,7 +953,7 @@ async function deleteServico(id) {
     }
 
     try {
-        const response = await fetch('api/panel/servicos.php', {
+        const response = await fetch(`${API_BASE}/panel/servicos`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -1043,7 +1044,7 @@ async function handleConvenioSubmit(id = null) {
     }
 
     try {
-        const response = await fetch('api/panel/convenios.php', {
+        const response = await fetch(`${API_BASE}/panel/convenios`, {
             method: id ? 'PUT' : 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1075,7 +1076,7 @@ async function deleteConvenio(id) {
     }
 
     try {
-        const response = await fetch('api/panel/convenios.php', {
+        const response = await fetch(`${API_BASE}/panel/convenios`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -1231,7 +1232,7 @@ async function handleHorarioSubmit(id) {
     };
     
     try {
-        const response = await fetch('api/panel/horarios.php', {
+        const response = await fetch(`${API_BASE}/panel/horarios`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -1263,7 +1264,7 @@ async function deleteHorario(id) {
     }
 
     try {
-        const response = await fetch('api/panel/horarios.php', {
+        const response = await fetch(`${API_BASE}/panel/horarios`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -1361,7 +1362,7 @@ async function handleExcecaoSubmit(id = null) {
     }
 
     try {
-        const response = await fetch('api/panel/excecoes.php', {
+        const response = await fetch(`${API_BASE}/panel/excecoes`, {
             method: id ? 'PUT' : 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1393,7 +1394,7 @@ async function deleteExcecao(id) {
     }
 
     try {
-        const response = await fetch('api/panel/excecoes.php', {
+        const response = await fetch(`${API_BASE}/panel/excecoes`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -1543,7 +1544,7 @@ async function handleFaqSubmit(id = null) {
     }
 
     try {
-        const response = await fetch('api/panel/faq.php', {
+        const response = await fetch(`${API_BASE}/panel/faq`, {
             method: id ? 'PUT' : 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1575,7 +1576,7 @@ async function deleteFaq(id) {
     }
 
     try {
-        const response = await fetch('api/panel/faq.php', {
+        const response = await fetch(`${API_BASE}/panel/faq`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -1674,7 +1675,7 @@ async function handlePagamentoSubmit(id = null) {
     }
 
     try {
-        const response = await fetch('api/panel/pagamentos.php', {
+        const response = await fetch(`${API_BASE}/panel/pagamentos`, {
             method: id ? 'PUT' : 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1706,7 +1707,7 @@ async function deletePagamento(id) {
     }
 
     try {
-        const response = await fetch('api/panel/pagamentos.php', {
+        const response = await fetch(`${API_BASE}/panel/pagamentos`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -1818,7 +1819,7 @@ async function handleParceiroSubmit(id = null) {
     }
 
     try {
-        const response = await fetch('api/panel/parceiros.php', {
+        const response = await fetch(`${API_BASE}/panel/parceiros`, {
             method: id ? 'PUT' : 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1850,7 +1851,7 @@ async function deleteParceiro(id) {
     }
 
     try {
-        const response = await fetch('api/panel/parceiros.php', {
+        const response = await fetch(`${API_BASE}/panel/parceiros`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -1877,11 +1878,11 @@ async function deleteParceiro(id) {
 // Função para testar conexão
 async function testConnection() {
     try {
-        const response = await fetch('api/panel/test.php');
+        const response = await fetch(`${API_BASE}/panel/configuracoes`);
         const data = await response.json();
 
         if (!data.success) {
-            throw new Error(data.message);
+            throw new Error(data.message || 'Falha no teste');
         }
 
         return data;

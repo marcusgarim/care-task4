@@ -1,7 +1,9 @@
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from ..core.db import get_db
-from ..schemas.feedback import FeedbackIn, RewriteIn
+from ..schemas.feedback import FeedbackIn, RewriteIn, ChatIn
+from ..services.openai_service import OpenAIService
 
 router = APIRouter()
 
@@ -53,3 +55,32 @@ async def rewrite(payload: RewriteIn, db = Depends(get_db)):
     except Exception:
         raise HTTPException(status_code=500, detail="Erro ao salvar resposta reescrita")
 
+@router.post("/chat")
+async def chat(payload: ChatIn):
+    try:
+        user_message = payload.message.strip()
+        if not user_message:
+            return JSONResponse(content={"success": False, "message": "Mensagem vazia"})
+
+        ai = OpenAIService()
+        if ai.is_configured():
+            result = ai.generate_reply(user_message, payload.sessionId, payload.isFirst)
+            return JSONResponse(content={
+                "success": True,
+                "message": result["message"],
+                "tokens": result["tokens"],
+            })
+        else:
+            reply = f"(mock) Você disse: {user_message}. Em breve este endpoint falará com a IA."
+            tokens = {"prompt_tokens": max(1, len(user_message)//4), "completion_tokens": max(1, len(reply)//4)}
+            return JSONResponse(content={
+                "success": True,
+                "message": reply,
+                "tokens": tokens
+            })
+    except Exception as e:
+        return JSONResponse(status_code=500, content={
+            "success": False,
+            "error": "Erro no chat",
+            "detail": str(e)
+        })
