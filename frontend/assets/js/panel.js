@@ -1,7 +1,7 @@
 // Variáveis globais
 let currentTab = 'configuracoes';
 let currentEditId = null;
-const API_BASE = 'http://127.0.0.1:8000/api';
+const API_BASE = (window.CONFIG && window.CONFIG.API_BASE) ? window.CONFIG.API_BASE : 'http://127.0.0.1:8000/api';
 
 // Função para aplicar máscara de moeda
 function applyCurrencyMask(input) {

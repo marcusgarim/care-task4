@@ -7,8 +7,8 @@ Este projeto é um assistente virtual para uma clínica. Pense assim:
 
 ### O que mudou com a migração
 
-- A branch `dev` agora está igual à `front` (o conteúdo da `front` foi levado para a `dev`).
-- Isso significa que o que você vê em `frontend/` é o que a `dev` entrega agora.
+- Front e Back separados por HTTP: o `frontend/` chama a API em `http://127.0.0.1:8000/api` (configurável).
+- Centralização da base da API no arquivo `frontend/assets/js/config.js` (existe `config.example.js`).
 
 ### Como tudo se conecta (visão geral)
 
@@ -18,19 +18,17 @@ Este projeto é um assistente virtual para uma clínica. Pense assim:
 4) A resposta volta para a página do chat e aparece bonitinha na tela.
 5) A conversa e alguns números (tokens, custo estimado) são salvos no banco.
 
-### Onde ficam as coisas
+### Onde ficam as coisas (atual)
 
 - `frontend/`
   - `index.html`: a página do chat.
-  - `assets/js/chat.js`: manda mensagem para o backend e mostra as respostas.
-  - `assets/css/chat.css`: estilos do chat.
-  - `assets/img/`: imagens (ex.: avatar).
+  - `panel.html`: painel administrativo.
+  - `assets/js/config.js` (copiar de `config.example.js`): define `window.CONFIG.API_BASE`.
+  - `assets/js/chat.js`: usa `CONFIG.API_BASE` para chamar o backend.
+  - `assets/js/panel.js`: usa `CONFIG.API_BASE` para CRUD do painel.
+  - `assets/css/*.css`: estilos.
 
-- `public/`
-  - `api/chat.php`: endpoint principal do chat (recebe `message`, `sessionId`).
-  - `api/exchange-rate.php`: fornece a taxa de câmbio (dólar→real) para calcular custos.
-  - `api/feedback.php` e `api/rewrite.php`: salvam feedback e reescritas das respostas.
-  - `panel/`: páginas do painel administrativo (configurações, serviços, etc.).
+- Backend agora está em Python/FastAPI (pasta `app/`) e serve `/api/*`.
 
 - `src/`
   - `Controllers/ChatController.php`: orquestra tudo (sessão, contexto, IA, funções e salvamento da conversa).
@@ -95,13 +93,17 @@ Coloque na raiz do projeto (mesmo nível de `composer.json`):
 
 ### Como rodar local (simples)
 
-1) Instale dependências PHP: `composer install`.
-2) Crie o `.env` com as chaves acima.
-3) Suba um servidor PHP apontando para `public/` (document root):
-   - `php -S 127.0.0.1:8000 -t public`
-4) Abra `http://127.0.0.1:8000/` no navegador.
+Backend:
+1) `python3 -m venv .venv && source .venv/bin/activate`
+2) `pip install -r requirements.txt`
+3) Configure `.env` com `DB_*`, `OPENAI_*` e, opcionalmente, `APP_CORS_ORIGINS`.
+4) `uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload`
 
-Se quiser abrir o HTML puro em `frontend/index.html`, os endpoints `api/*` podem não funcionar por causa de caminho/origem. Prefira rodar via `public/`.
+Frontend:
+1) Copie `frontend/assets/js/config.example.js` para `frontend/assets/js/config.js`.
+2) Ajuste `API_BASE` conforme o endereço do backend.
+3) `python3 -m http.server 5500 -d frontend` e abra `http://127.0.0.1:5500/index.html`.
+
 
 ### Branches (depois da migração)
 

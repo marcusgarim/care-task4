@@ -336,3 +336,8 @@ attachments/
 cache/
 tmp/
 temp/
+
+# Project-specific ignores
+# Ignore any files whose basename ends with `_commented`
+*_commented
+*_commented.*

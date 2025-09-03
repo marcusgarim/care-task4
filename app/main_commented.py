@@ -14,6 +14,7 @@ Think of it as the "central hub" that coordinates everything.
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import os
 
 # CRIANDO A APLICAÇÃO FASTAPI
 # Isso cria uma instância do servidor web que vai receber requisições
@@ -21,11 +22,14 @@ app = FastAPI()
 
 # CONFIGURANDO CORS (Cross-Origin Resource Sharing)
 # CORS permite que o frontend (rodando em outro domínio/porta) acesse nossa API
+cors_origins_env = os.getenv("APP_CORS_ORIGINS", "*")
+allow_origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()] if cors_origins_env != "*" else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],        # Permite requisições de qualquer origem (domínio)
-    allow_credentials=True,     # Permite envio de cookies e credenciais
-    allow_methods=["*"]         # Permite todos os métodos HTTP (GET, POST, PUT, DELETE, etc.)
+    allow_origins=allow_origins,        # Configure via env APP_CORS_ORIGINS
+    allow_credentials=True,             # Permite envio de cookies e credenciais
+    allow_methods=["*"]                # Permite todos os métodos HTTP (GET, POST, PUT, DELETE, etc.)
 )
 
 # TRATAMENTO GLOBAL DE ERROS HTTP

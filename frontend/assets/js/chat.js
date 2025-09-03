@@ -62,7 +62,8 @@ function sendMessage() {
     addDebugLog('Enviando mensagem', { message, sessionId });
     
     // Envia para o servidor
-    fetch('http://127.0.0.1:8000/api/chat', {
+    const API_BASE = (window.CONFIG && window.CONFIG.API_BASE) ? window.CONFIG.API_BASE : 'http://127.0.0.1:8000/api';
+    fetch(`${API_BASE}/chat`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -180,7 +181,8 @@ function handleFeedback(messageId, feedbackType, button) {
     button.classList.add('active');
     
     // Envia feedback para o servidor (FastAPI)
-    fetch('http://127.0.0.1:8000/api/feedback', {
+    const API_BASE = (window.CONFIG && window.CONFIG.API_BASE) ? window.CONFIG.API_BASE : 'http://127.0.0.1:8000/api';
+    fetch(`${API_BASE}/feedback`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -225,7 +227,8 @@ function showRewriteModal(messageId) {
 function saveRewrite(messageId) {
     const rewrittenText = document.getElementById('rewriteText').value;
     
-    fetch('http://127.0.0.1:8000/api/rewrite', {
+    const API_BASE = (window.CONFIG && window.CONFIG.API_BASE) ? window.CONFIG.API_BASE : 'http://127.0.0.1:8000/api';
+    fetch(`${API_BASE}/rewrite`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -310,7 +313,8 @@ function updateStats(tokens) {
 }
 
 function fetchExchangeRate() {
-    fetch('http://127.0.0.1:8000/api/exchange-rate')
+    const API_BASE = (window.CONFIG && window.CONFIG.API_BASE) ? window.CONFIG.API_BASE : 'http://127.0.0.1:8000/api';
+    fetch(`${API_BASE}/exchange-rate`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {

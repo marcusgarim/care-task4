@@ -1,13 +1,19 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import os
 
 app = FastAPI()
+
+# CORS via env: APP_CORS_ORIGINS=dominio1,dominio2 (ou * para liberar)
+cors_origins_env = os.getenv("APP_CORS_ORIGINS", "*")
+allow_origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()] if cors_origins_env != "*" else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allow_origins,
     allow_credentials=True,
-    allow_methods=["*"]
+    allow_methods=["*"],
 )
 
 # Tratamento global de exceções para manter formato consistente

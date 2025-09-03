@@ -94,10 +94,14 @@ Observação: as rotas de `feedback`/`rewrite` requerem MySQL funcionando, pois 
 ### `frontend/index.html`
 - Estrutura do chat (campo de texto, botão enviar, área de mensagens e painel de debug simples).
 
+### `frontend/assets/js/config.js` e `config.example.js`
+- Centraliza a base da API via `window.CONFIG.API_BASE`.
+- Copie `config.example.js` para `config.js` e ajuste a URL do backend.
+
 ### `frontend/assets/js/chat.js`
 - Controla o chat no navegador.
-- Envia mensagens para `POST /api/chat` e mostra a resposta.
-- Busca taxa de câmbio em `GET /api/exchange-rate` para calcular custo estimado.
+- Usa `window.CONFIG.API_BASE` para chamar `POST /api/chat`.
+- Busca taxa de câmbio em `GET /api/exchange-rate` usando `API_BASE`.
 - Envia feedback em `POST /api/feedback` e reescritas em `POST /api/rewrite`.
 - Atualiza painel de estatísticas (tokens e custos) e registra logs de debug.
 
@@ -105,8 +109,8 @@ Observação: as rotas de `feedback`/`rewrite` requerem MySQL funcionando, pois 
 - Interface do painel administrativo com abas (configurações, profissionais, serviços, convênios, horários, agenda, FAQ, pagamentos, parceiros).
 
 ### `frontend/assets/js/panel.js`
-- Define `API_BASE = 'http://127.0.0.1:8000/api'`.
-- Carrega dados e faz operações de CRUD chamando as rotas `/api/panel/...`.
+- Usa `window.CONFIG.API_BASE` como base para `/api/panel/...`.
+- Carrega dados e faz operações de CRUD chamando as rotas do backend.
 - Mostra mensagens de erro/sucesso na interface.
 - Requer MySQL ativo e com as tabelas esperadas.
 
@@ -153,6 +157,8 @@ python3 -m http.server 5500 -d frontend
 # Abra http://127.0.0.1:5500/index.html
 ```
 
+Antes de abrir, copie `frontend/assets/js/config.example.js` para `frontend/assets/js/config.js` e ajuste `API_BASE`.
+
 ---
 
 ## Dicas e problemas comuns
@@ -162,7 +168,7 @@ python3 -m http.server 5500 -d frontend
   - Nome do deployment (`AZURE_OPENAI_DEPLOYMENT`) — precisa existir no seu recurso.
   - Endpoint (`AZURE_OPENAI_ENDPOINT`) — use o domínio do seu recurso.
   - Versão de API — `2025-05-01-preview` (ou outra habilitada no recurso).
-- O CORS está liberado no backend para facilitar o desenvolvimento local.
+- CORS configurável via env: defina `APP_CORS_ORIGINS` (ex.: `https://seu-front.com,https://staging.seu-front.com`) no backend.
 - Sem chaves de IA, o chat devolve uma resposta “mock” útil para testes de UI.
 
 ---
