@@ -19,14 +19,16 @@ async def atualizar_configuracoes(payload: dict, db = Depends(get_db)):
     if not payload:
         raise HTTPException(status_code=400, detail="Dados inválidos")
     try:
-        db.begin()
         with db.cursor() as cur:
             for chave, valor in payload.items():
                 cur.execute(
                     "UPDATE configuracoes SET valor = %s, updated_at = NOW() WHERE chave = %s",
                     (valor, chave)
                 )
-        db.commit()
+        try:
+            db.commit()
+        except Exception:
+            pass
         return JSONResponse(content={"success": True, "message": "Configurações atualizadas com sucesso"})
     except Exception:
         try:
