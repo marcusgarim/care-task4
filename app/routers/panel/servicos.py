@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
-from ...core.db import get_db
+from ...core.db import get_db, is_postgres_connection
 
 router = APIRouter(prefix="/panel", tags=["panel-servicos"])
 
@@ -26,21 +26,39 @@ async def criar_servico(payload: dict, db = Depends(get_db)):
     if not payload or "nome" not in payload:
         raise HTTPException(status_code=400, detail="Nome do serviço é obrigatório")
     with db.cursor() as cur:
-        cur.execute(
-            """
-            INSERT INTO servicos_clinica (
-                nome, descricao, valor, ativo, palavras_chave, categoria, observacoes, preparo_necessario, anestesia_tipo, local_realizacao
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """,
-            (
-                payload.get("nome"), payload.get("descricao"),
-                (None if payload.get("valor", None) == "" else payload.get("valor")),
-                payload.get("ativo", 1), payload.get("palavras_chave"), payload.get("categoria"),
-                payload.get("observacoes"), payload.get("preparo_necessario"), payload.get("anestesia_tipo"),
-                payload.get("local_realizacao")
+        if is_postgres_connection(db):
+            cur.execute(
+                """
+                INSERT INTO servicos_clinica (
+                    nome, descricao, valor, ativo, palavras_chave, categoria, observacoes, preparo_necessario, anestesia_tipo, local_realizacao
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+                """,
+                (
+                    payload.get("nome"), payload.get("descricao"),
+                    (None if payload.get("valor", None) == "" else payload.get("valor")),
+                    payload.get("ativo", 1), payload.get("palavras_chave"), payload.get("categoria"),
+                    payload.get("observacoes"), payload.get("preparo_necessario"), payload.get("anestesia_tipo"),
+                    payload.get("local_realizacao")
+                )
             )
-        )
-        new_id = cur.lastrowid
+            row = cur.fetchone()
+            new_id = row["id"] if row else None
+        else:
+            cur.execute(
+                """
+                INSERT INTO servicos_clinica (
+                    nome, descricao, valor, ativo, palavras_chave, categoria, observacoes, preparo_necessario, anestesia_tipo, local_realizacao
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    payload.get("nome"), payload.get("descricao"),
+                    (None if payload.get("valor", None) == "" else payload.get("valor")),
+                    payload.get("ativo", 1), payload.get("palavras_chave"), payload.get("categoria"),
+                    payload.get("observacoes"), payload.get("preparo_necessario"), payload.get("anestesia_tipo"),
+                    payload.get("local_realizacao")
+                )
+            )
+            new_id = cur.lastrowid
         return JSONResponse(content={"success": True, "message": "Serviço criado com sucesso", "id": new_id})
 
 @router.put("/servicos")

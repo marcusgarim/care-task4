@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from ...core.db import get_db
+from ...core.db import get_db, is_postgres_connection
 
 router = APIRouter(prefix="/panel", tags=["panel-excecoes"])
 
@@ -24,11 +24,19 @@ async def criar_excecao(payload: dict, db = Depends(get_db)):
         row = cur.fetchone()
         if row and (row.get("count", 0) > 0):
             raise HTTPException(status_code=400, detail="Já existe uma exceção ativa para esta data.")
-        cur.execute(
-            "INSERT INTO excecoes_agenda (data, tipo, descricao, ativo) VALUES (%s, %s, %s, %s)",
-            (payload.get("data"), payload.get("tipo"), payload.get("descricao"), payload.get("ativo", 1))
-        )
-        new_id = cur.lastrowid
+        if is_postgres_connection(db):
+            cur.execute(
+                "INSERT INTO excecoes_agenda (data, tipo, descricao, ativo) VALUES (%s, %s, %s, %s) RETURNING id",
+                (payload.get("data"), payload.get("tipo"), payload.get("descricao"), payload.get("ativo", 1))
+            )
+            r = cur.fetchone()
+            new_id = r["id"] if r else None
+        else:
+            cur.execute(
+                "INSERT INTO excecoes_agenda (data, tipo, descricao, ativo) VALUES (%s, %s, %s, %s)",
+                (payload.get("data"), payload.get("tipo"), payload.get("descricao"), payload.get("ativo", 1))
+            )
+            new_id = cur.lastrowid
         return JSONResponse(content={"success": True, "message": "Exceção criada com sucesso", "id": new_id})
 
 @router.put("/excecoes")

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from ...core.db import get_db
+from ...core.db import get_db, is_postgres_connection
 
 router = APIRouter(prefix="/panel", tags=["panel-faq"])
 
@@ -19,14 +19,25 @@ async def criar_faq(payload: dict, db = Depends(get_db)):
     if not payload or "pergunta" not in payload or "resposta" not in payload:
         raise HTTPException(status_code=400, detail="Pergunta e resposta são obrigatórias")
     with db.cursor() as cur:
-        cur.execute(
-            "INSERT INTO faq (pergunta, resposta, categoria, palavras_chave, ativo) VALUES (%s, %s, %s, %s, %s)",
-            (
-                payload.get("pergunta"), payload.get("resposta"), payload.get("categoria"),
-                payload.get("palavras_chave"), payload.get("ativo", 1)
+        if is_postgres_connection(db):
+            cur.execute(
+                "INSERT INTO faq (pergunta, resposta, categoria, palavras_chave, ativo) VALUES (%s, %s, %s, %s, %s) RETURNING id",
+                (
+                    payload.get("pergunta"), payload.get("resposta"), payload.get("categoria"),
+                    payload.get("palavras_chave"), payload.get("ativo", 1)
+                )
             )
-        )
-        new_id = cur.lastrowid
+            row = cur.fetchone()
+            new_id = row["id"] if row else None
+        else:
+            cur.execute(
+                "INSERT INTO faq (pergunta, resposta, categoria, palavras_chave, ativo) VALUES (%s, %s, %s, %s, %s)",
+                (
+                    payload.get("pergunta"), payload.get("resposta"), payload.get("categoria"),
+                    payload.get("palavras_chave"), payload.get("ativo", 1)
+                )
+            )
+            new_id = cur.lastrowid
         return JSONResponse(content={"success": True, "message": "FAQ criada com sucesso", "id": new_id})
 
 @router.put("/faq")

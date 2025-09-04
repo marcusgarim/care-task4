@@ -124,3 +124,94 @@ Esse script carrega o `.env` da raiz (se existir), divide o SQL em instruções 
 ## Nota sobre o Frontend
 
 A estrutura e decisões do frontend foram preservadas. Para detalhes específicos (CSS/JS/páginas), consulte `frontend/` e configure `frontend/assets/js/config.js` a partir de `config.example.js`.
+
+---
+
+## Arquitetura e Fluxo
+
+- App FastAPI (`app/main.py`) monta CORS, tratadores globais de erro e inclui os routers sob `/api`.
+- Conexão de banco (`app/core/db.py`) seleciona PostgreSQL quando `PGHOST` está definido (com `row_factory` de dicionário); caso contrário, usa MySQL.
+- Serviço de IA (`app/services/openai_service.py`) prioriza Azure OpenAI; se indisponível, usa OpenAI; se nenhuma opção disponível, o endpoint de chat responde em modo "mock".
+
+Fluxo do chat:
+1. Front envia `POST /api/chat` com `{ message, sessionId, isFirst }`.
+2. Backend tenta IA; se indisponível/erro, responde em modo mock (mantendo UX).
+3. Rotas de `feedback` e `rewrite` usam a última conversa da sessão (via `sessionId`).
+
+## Padrões de Resposta e Erros
+
+- Tratamento global (`app/main.py`):
+  - 400: `{ "error": "Dados inválidos" }`
+  - 405: `{ "error": "Método não permitido" }`
+  - 500: `{ "success": false, "error": "Erro interno do servidor", "message": "Desculpe, ocorreu um erro..." }`
+- `GET /api/exchange-rate` (sucesso): `{ success: true, rate: number, formatted_rate: string, currency: "BRL" }`
+- `GET /api/exchange-rate` (falha): status 500, `{ success: false, error: "Erro ao obter taxa de câmbio", rate: 5.00 }`
+
+## Especificação de Payloads (request/response)
+
+- `POST /api/chat`
+  - Request JSON: `{ "message": string, "sessionId": string, "isFirst": boolean }`
+  - Response JSON (IA): `{ "success": true, "message": string, "tokens": { "prompt_tokens": number, "completion_tokens": number } }`
+  - Response JSON (mock): igual ao acima com mensagem simulada.
+
+- `POST /api/feedback`
+  - Request JSON: `{ "messageId": number, "feedbackType": "positivo"|"negativo", "sessionId": string }`
+  - Response JSON: `{ "success": true, "message": "Feedback registrado com sucesso" }` ou `{ "success": false, "message": "Conversa não encontrada" }`
+
+- `POST /api/rewrite`
+  - Request JSON: `{ "messageId": number, "rewrittenText": string, "sessionId": string }`
+  - Response JSON: `{ "success": true, "message": "Resposta reescrita salva com sucesso" }` ou `{ "success": false, "message": "Conversa não encontrada" }`
+
+- Painel (`/api/panel/*`): sempre JSON. Em `PUT`, apenas campos presentes são atualizados. Alguns deletes são soft (definem `ativo = 0`).
+
+## Exemplos de cURL
+
+```bash
+# Chat (mock se IA não configurada)
+curl -s -X POST http://127.0.0.1:8000/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"Olá","sessionId":"abc-123","isFirst":true}'
+
+# Feedback
+curl -s -X POST http://127.0.0.1:8000/api/feedback \
+  -H 'Content-Type: application/json' \
+  -d '{"messageId":1,"feedbackType":"positivo","sessionId":"abc-123"}'
+
+# Reescrita
+curl -s -X POST http://127.0.0.1:8000/api/rewrite \
+  -H 'Content-Type: application/json' \
+  -d '{"messageId":1,"rewrittenText":"...","sessionId":"abc-123"}'
+
+# Taxa de câmbio
+curl -s http://127.0.0.1:8000/api/exchange-rate
+```
+
+## Regras por Rota do Painel (resumo)
+
+- `configuracoes`: `GET` lista chaves/valores; `POST` atualiza múltiplas chaves em transação.
+- `profissionais`: `DELETE` é hard delete; `POST`/`PUT` retornam id/atualizam campos; suporta PostgreSQL (RETURNING) e MySQL.
+- `servicos`: `GET` suporta `?id=N`; `PUT` normaliza campos vazios para `NULL`; `DELETE` é hard delete.
+- `convenios`: `DELETE` é hard delete; `PUT` inclui `updated_at = NOW()`.
+- `horarios`: `PUT` sempre inclui campos de horários; normaliza `"00:00"` e vazios para `NULL`.
+- `excecoes`: `DELETE` faz soft delete (`ativo = 0`); valida duplicidade ativa por data.
+- `faq`: `DELETE`/desativação via `ativo = 0`; `PUT` pode apenas alternar `ativo`.
+- `pagamentos`: `DELETE`/desativação via `ativo = 0`; `PUT` pode apenas alternar `ativo`.
+- `parceiros`: `DELETE`/desativação via `ativo = 0`; `PUT` pode apenas alternar `ativo`.
+
+## Segurança e CORS
+
+- CORS configurável via `APP_CORS_ORIGINS`. Use domínios específicos em produção.
+- Não há autenticação nas rotas do painel nesta versão; recomenda-se proteger via gateway/proxy ou adicionar auth (JWT/sessão) antes de expor publicamente.
+
+## Deploy (prod)
+
+- Execute o FastAPI com `uvicorn`/`gunicorn` atrás de um proxy reverso (NGINX/Apache).
+- Sirva o `frontend/` como estático e encaminhe `/api/*` para o backend.
+- Configure variáveis de ambiente seguras (não commitar `.env`).
+
+## Troubleshooting
+
+- 500 em rotas do painel/feedback: banco indisponível/tabelas ausentes → suba o banco e rode `bootstrap.sql` (MySQL) ou `bootstrap_pg.sql` (PostgreSQL).
+- Erro da Azure OpenAI (404/401): verifique `AZURE_OPENAI_*` (endpoint, deployment, versão API).
+- CORS bloqueado no navegador: ajuste `APP_CORS_ORIGINS` e reinicie o backend.
+- Chat sem IA configurada: funcionamento em modo mock é esperado para testes de UI.

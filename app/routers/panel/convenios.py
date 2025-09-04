@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from ...core.db import get_db
+from ...core.db import get_db, is_postgres_connection
 
 router = APIRouter(prefix="/panel", tags=["panel-convenios"])
 
@@ -19,11 +19,19 @@ async def criar_convenio(payload: dict, db = Depends(get_db)):
     if not payload or "nome" not in payload:
         raise HTTPException(status_code=400, detail="Nome do convênio é obrigatório")
     with db.cursor() as cur:
-        cur.execute(
-            "INSERT INTO convenios_aceitos (nome, registro_ans, observacoes, ativo) VALUES (%s, %s, %s, %s)",
-            (payload.get("nome"), payload.get("registro_ans"), payload.get("observacoes"), 1)
-        )
-        new_id = cur.lastrowid
+        if is_postgres_connection(db):
+            cur.execute(
+                "INSERT INTO convenios_aceitos (nome, registro_ans, observacoes, ativo) VALUES (%s, %s, %s, %s) RETURNING id",
+                (payload.get("nome"), payload.get("registro_ans"), payload.get("observacoes"), 1)
+            )
+            row = cur.fetchone()
+            new_id = row["id"] if row else None
+        else:
+            cur.execute(
+                "INSERT INTO convenios_aceitos (nome, registro_ans, observacoes, ativo) VALUES (%s, %s, %s, %s)",
+                (payload.get("nome"), payload.get("registro_ans"), payload.get("observacoes"), 1)
+            )
+            new_id = cur.lastrowid
         return JSONResponse(content={"success": True, "message": "Convênio criado com sucesso", "id": new_id})
 
 @router.put("/convenios")

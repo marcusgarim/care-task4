@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from ...core.db import get_db
+from ...core.db import get_db, is_postgres_connection
 
 router = APIRouter(prefix="/panel", tags=["panel-parceiros"])
 
@@ -19,14 +19,25 @@ async def criar_parceiro(payload: dict, db = Depends(get_db)):
     if not payload or "nome" not in payload:
         raise HTTPException(status_code=400, detail="Nome do parceiro é obrigatório")
     with db.cursor() as cur:
-        cur.execute(
-            "INSERT INTO parceiros (tipo, nome, endereco, telefone, ativo) VALUES (%s, %s, %s, %s, %s)",
-            (
-                payload.get("tipo"), payload.get("nome"), payload.get("endereco"),
-                payload.get("telefone"), payload.get("ativo", 1)
+        if is_postgres_connection(db):
+            cur.execute(
+                "INSERT INTO parceiros (tipo, nome, endereco, telefone, ativo) VALUES (%s, %s, %s, %s, %s) RETURNING id",
+                (
+                    payload.get("tipo"), payload.get("nome"), payload.get("endereco"),
+                    payload.get("telefone"), payload.get("ativo", 1)
+                )
             )
-        )
-        new_id = cur.lastrowid
+            row = cur.fetchone()
+            new_id = row["id"] if row else None
+        else:
+            cur.execute(
+                "INSERT INTO parceiros (tipo, nome, endereco, telefone, ativo) VALUES (%s, %s, %s, %s, %s)",
+                (
+                    payload.get("tipo"), payload.get("nome"), payload.get("endereco"),
+                    payload.get("telefone"), payload.get("ativo", 1)
+                )
+            )
+            new_id = cur.lastrowid
         return JSONResponse(content={"success": True, "message": "Parceiro criado com sucesso", "id": new_id})
 
 @router.put("/parceiros")
