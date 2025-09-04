@@ -1,140 +1,109 @@
-# Frontend - Sistema de Assistente Virtual Médico
+# Sistema de Assistente Virtual Médico — Documentação Geral
 
-Esta pasta contém o frontend migrado do sistema PHP para HTML/CSS puro, mantendo fielmente o layout e funcionalidades da interface original.
+Este documento resume a arquitetura atual do projeto, como executar localmente, variáveis de ambiente, endpoints principais e onde encontrar detalhes adicionais.
 
-## Estrutura dos Arquivos
+## Visão Geral
+
+- Backend em Python com FastAPI, servindo APIs REST em `http://127.0.0.1:8000/api`.
+- Frontend estático (HTML/CSS/JS) em `frontend/` consumindo as APIs do backend.
+- Banco: PostgreSQL (preferencial) via `psycopg` ou MySQL via `PyMySQL` (fallback).
+- Integração com Azure OpenAI (preferencial) ou OpenAI padrão. Sem chaves, o chat funciona em modo "mock".
+
+## Estrutura do Projeto
 
 ```
-frontend/
-├── index.html              # Página principal do chat (equivale a chat.php)
-├── panel.html              # Painel administrativo (equivale a panel.php)
-├── assets/
-│   ├── css/
-│   │   ├── chat.css        # Estilos específicos da página de chat
-│   │   └── panel.css       # Estilos específicos do painel administrativo
-│   ├── js/
-│   │   ├── chat.js         # JavaScript do chat (copiado do original)
-│   │   ├── panel.js        # JavaScript do painel (copiado do original)
-│   │   └── panel_backup.js # Backup do painel
-│   └── img/
-│       ├── Andréia.png     # Avatar do assistente
-│       ├── blank.png       # Avatar do usuário
-│       └── favicon.ico     # Ícone do site
-└── README.md               # Este arquivo
+care-task4/
+├── app/                      # Backend FastAPI
+│   ├── core/db.py            # Conexão com banco (PostgreSQL ou MySQL)
+│   ├── main.py               # FastAPI app, CORS, routers
+│   ├── routers/              # Endpoints (inclui /api/panel/*)
+│   ├── schemas/              # Pydantic (validação input)
+│   └── services/             # OpenAI/Azure e câmbio
+├── frontend/                 # Frontend estático (chat e painel)
+│   ├── index.html            # Chat
+│   ├── panel.html            # Painel
+│   └── assets/               # CSS, JS, imagens
+├── doc/                      # Este diretório (docs e SQL)
+│   ├── DOCUMENTACAO_ATUAL_FASTAPI.md
+│   ├── CAMBIO_MOEDA.md
+│   ├── LOGGING_SYSTEM.md
+│   ├── REPO_POS_MIGRACAO.md
+│   ├── SESSION_IMPLEMENTATION.md
+│   └── bootstrap.sql
+└── requirements.txt          # Dependências Python
 ```
 
-## Decisões de Arquitetura
+## Execução Local (Desenvolvimento)
 
-### CSS Separado por Página
-Optei por manter os arquivos CSS separados (chat.css e panel.css) pelas seguintes razões:
-- **Modularidade**: Cada página tem suas próprias regras de estilo
-- **Performance**: Carrega apenas os estilos necessários para cada página
-- **Manutenção**: Facilita a manutenção e modificação de estilos específicos
-- **Organização**: Evita conflitos entre estilos de diferentes páginas
-
-### Estrutura de Assets
-- **Pasta centralizada**: Todos os recursos (CSS, JS, imagens) em `/assets/`
-- **Organização por tipo**: Subpastas para cada tipo de recurso
-- **Compatibilidade**: Mantém compatibilidade com o JavaScript existente
-
-## Páginas Disponíveis
-
-### 1. Chat (index.html)
-- Interface principal do assistente virtual
-- Chat em tempo real com debug panel
-- Design responsivo para mobile e desktop
-- Animações de partículas de fundo
-- Sistema de feedback integrado
-
-### 2. Painel Administrativo (panel.html)
-- Configurações gerais da clínica
-- Gestão de profissionais, serviços, convênios
-- Horários de atendimento e exceções
-- FAQ e formas de pagamento
-- Interface com abas navegáveis
-
-## Compatibilidade com Backend
-
-### APIs Necessárias
-O frontend espera que o backend Python implemente as seguintes APIs:
-
-#### Chat
-- `POST /api/chat` - Processar mensagens do chat
-- `POST /api/feedback` - Sistema de feedback
-- `POST /api/rewrite` - Reescrita colaborativa
-- `GET /api/exchange-rate` - Taxa de câmbio
-
-#### Painel Administrativo
-- `GET/POST /api/panel/configuracoes` - Configurações gerais
-- `GET/POST /api/panel/profissionais` - Gestão de profissionais
-- `GET/POST /api/panel/servicos` - Gestão de serviços
-- `GET/POST /api/panel/convenios` - Gestão de convênios
-- `GET/POST /api/panel/horarios` - Horários de atendimento
-- `GET/POST /api/panel/excecoes` - Exceções de agenda
-- `GET/POST /api/panel/faq` - Perguntas frequentes
-- `GET/POST /api/panel/pagamentos` - Formas de pagamento
-- `GET/POST /api/panel/parceiros` - Parceiros
-
-### Formato de Dados
-O JavaScript espera receber dados no mesmo formato JSON utilizado pelo sistema PHP original.
-
-## Como Servir o Frontend
-
-### Servidor de Desenvolvimento
+1) Preparar Python
 ```bash
-# Usando Python
-cd frontend
-python -m http.server 8000
-
-# Usando Node.js
-npx serve .
-
-# Usando PHP (se ainda estiver disponível)
-php -S localhost:8000
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-### Produção
-- Configure um servidor web (nginx, Apache) para servir os arquivos estáticos
-- Configure proxy reverso para as APIs do backend Python
-- Certifique-se de que os caminhos dos assets estão corretos
+2) Variáveis de ambiente (`.env` na raiz ou exportadas)
+- Banco (usa PostgreSQL se `PGHOST` estiver definido; senão, MySQL):
+  - PostgreSQL: `PGHOST`, `PGPORT` (opcional), `PGUSER`, `PGPASSWORD`, `PGDATABASE`, `PGSSLMODE` (opcional)
+  - MySQL: `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`
+- CORS: `APP_CORS_ORIGINS` (ex.: `https://seu-front.com,https://staging.seu-front.com` ou `*`)
+- Azure OpenAI (preferencial): `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_API_VERSION` (padrão `2025-05-01-preview`), `AZURE_OPENAI_DEPLOYMENT`
+- OpenAI padrão: `OPENAI_API_KEY`, `OPENAI_MODEL` (padrão `gpt-4o-mini`)
 
-## Modificações Realizadas
+3) Subir backend
+```bash
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
 
-### Alterações nos Caminhos
-- **CSS**: Movido de `css/` para `assets/css/`
-- **JavaScript**: Movido de `js/` para `assets/js/`
-- **Imagens**: Movido de `img/` para `assets/img/`
+4) Subir frontend (estático)
+```bash
+python3 -m http.server 5500 -d frontend
+# Acesse http://127.0.0.1:5500/index.html
+```
+Antes, copie `frontend/assets/js/config.example.js` para `frontend/assets/js/config.js` e ajuste `window.CONFIG.API_BASE`.
 
-### Alterações nos Links
-- **Panel button**: Agora aponta para `panel.html` em vez de `panel.php`
-- **Back button**: No painel aponta para `index.html` em vez de `chat.php`
-- **Assets**: Todos os links atualizados para a nova estrutura
+## Endpoints
 
-### CSS
-- **chat.css**: Replica fielmente todos os estilos da página de chat
-- **panel.css**: Replica fielmente todos os estilos do painel administrativo
-- **Responsividade**: Mantém todas as breakpoints e ajustes mobile
+Prefixo: `http://127.0.0.1:8000/api`
 
-## Próximos Passos
+- `POST /chat`: Chat com IA (ou "mock" sem chaves).
+- `POST /feedback`: Registra feedback da última conversa (requer banco).
+- `POST /rewrite`: Salva reescrita da última resposta (requer banco).
+- `GET /exchange-rate`: Taxa USD→BRL e formato pt-BR.
 
-### Para o Backend Python
-1. Implementar as APIs listadas acima
-2. Manter compatibilidade com formato JSON existente
-3. Configurar CORS para permitir requisições do frontend
-4. Implementar autenticação/autorização se necessário
+### Painel Administrativo (`/api/panel/*`)
+- Configurações: `GET/POST /panel/configuracoes`
+- Profissionais: `GET/POST/PUT/DELETE /panel/profissionais`
+- Serviços: `GET/POST/PUT/DELETE /panel/servicos` (suporta `GET /servicos?id=N`)
+- Convênios: `GET/POST/PUT/DELETE /panel/convenios`
+- Horários: `GET/PUT/DELETE /panel/horarios`
+- Exceções: `GET/POST/PUT/DELETE /panel/excecoes`
+- FAQ: `GET/POST/PUT/DELETE /panel/faq`
+- Pagamentos: `GET/POST/PUT/DELETE /panel/pagamentos`
+- Parceiros: `GET/POST/PUT/DELETE /panel/parceiros`
 
-### Para Deploy
-1. Configurar servidor web para servir arquivos estáticos
-2. Configurar proxy para APIs do backend
-3. Otimizar assets (minificação, compressão)
-4. Configurar cache adequado
+Observações:
+- Rotas do painel e feedback requerem banco ativo e tabelas criadas (ver `bootstrap.sql`).
+- As respostas seguem JSON padronizado para o frontend.
 
-## Notas Técnicas
+## Banco de Dados
 
-- **Compatibilidade**: HTML5, CSS3, ES6+
-- **Dependências**: Nenhuma dependência externa (Vanilla JavaScript)
-- **Tamanho**: Assets otimizados para carregamento rápido
-- **Acessibilidade**: Mantém estrutura semântica do HTML
-- **SEO**: Meta tags apropriadas configuradas
+- Suporta PostgreSQL (psycopg) e MySQL (PyMySQL). A detecção é automática conforme variáveis do ambiente.
+- Exemplo de schema: `doc/bootstrap.sql`.
 
-O frontend está pronto para ser integrado com o backend Python, mantendo total fidelidade ao design e funcionalidades originais.
+## Serviços
+
+- `OpenAIService`: usa Azure OpenAI se configurado; caso contrário, OpenAI. Retorna `{ message, tokens }`.
+- `CurrencyService`: busca taxa USD→BRL (awesomeapi) com fallback conservador.
+
+## Documentos Relacionados
+
+- Detalhamento do backend e frontend: `DOCUMENTACAO_ATUAL_FASTAPI.md`
+- Câmbio e custos: `CAMBIO_MOEDA.md`
+- Sessão e fluxo: `SESSION_IMPLEMENTATION.md`
+- Logging: `LOGGING_SYSTEM.md`
+- Notas de migração: `REPO_POS_MIGRACAO.md`
+
+## Nota sobre o Frontend
+
+A estrutura e decisões do frontend foram preservadas. Para detalhes específicos (CSS/JS/páginas), consulte este repositório em `frontend/` e o arquivo `frontend/assets/js/config.example.js` para configurar `API_BASE`.
