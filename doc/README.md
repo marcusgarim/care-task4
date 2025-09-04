@@ -30,6 +30,8 @@ care-task4/
 │   ├── REPO_POS_MIGRACAO.md
 │   ├── SESSION_IMPLEMENTATION.md
 │   └── bootstrap.sql
+├── scripts/
+│   └── bootstrap_pg.py       # Script para provisionar PostgreSQL a partir do SQL
 └── requirements.txt          # Dependências Python
 ```
 
@@ -83,13 +85,28 @@ Prefixo: `http://127.0.0.1:8000/api`
 - Parceiros: `GET/POST/PUT/DELETE /panel/parceiros`
 
 Observações:
-- Rotas do painel e feedback requerem banco ativo e tabelas criadas (ver `bootstrap.sql`).
+- Rotas do painel e feedback requerem banco ativo e tabelas criadas (ver `bootstrap.sql` e `bootstrap_pg.sql`).
 - As respostas seguem JSON padronizado para o frontend.
 
 ## Banco de Dados
 
 - Suporta PostgreSQL (psycopg) e MySQL (PyMySQL). A detecção é automática conforme variáveis do ambiente.
-- Exemplo de schema: `doc/bootstrap.sql`.
+- Exemplo de schema MySQL: `doc/bootstrap.sql`.
+
+### Bootstrap PostgreSQL
+
+O repositório inclui um SQL de bootstrap para PostgreSQL e um script auxiliar para executá-lo de forma segura:
+
+- SQL: `doc/bootstrap_pg.sql`
+- Script: `scripts/bootstrap_pg.py`
+
+Uso (com variáveis PG configuradas):
+```bash
+# Variáveis esperadas: PGHOST, PGUSER, PGPASSWORD, PGDATABASE (PGPORT/PGSSLMODE opcionais)
+python3 scripts/bootstrap_pg.py
+```
+
+Esse script carrega o `.env` da raiz (se existir), divide o SQL em instruções e executa sequencialmente.
 
 ## Serviços
 
@@ -102,8 +119,8 @@ Observações:
 - Câmbio e custos: `CAMBIO_MOEDA.md`
 - Sessão e fluxo: `SESSION_IMPLEMENTATION.md`
 - Logging: `LOGGING_SYSTEM.md`
-- Notas de migração: `REPO_POS_MIGRACAO.md`
+- Pós-migração: `REPO_POS_MIGRACAO.md`
 
 ## Nota sobre o Frontend
 
-A estrutura e decisões do frontend foram preservadas. Para detalhes específicos (CSS/JS/páginas), consulte este repositório em `frontend/` e o arquivo `frontend/assets/js/config.example.js` para configurar `API_BASE`.
+A estrutura e decisões do frontend foram preservadas. Para detalhes específicos (CSS/JS/páginas), consulte `frontend/` e configure `frontend/assets/js/config.js` a partir de `config.example.js`.
