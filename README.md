@@ -1,296 +1,204 @@
-# Documentação Técnica Completa - Sistema de Assistente Virtual Médico
+# Sistema de Assistente Virtual Médico - Smart Schedule
 
 ## Visão Geral do Sistema
 
-O sistema é uma aplicação completa de assistente virtual para clínicas médicas, desenvolvida em PHP com integração à API da OpenAI. O foco principal é automatizar o agendamento de consultas através de conversas naturais, mantendo dados sempre atualizados e fornecendo uma experiência de atendimento personalizada.
+O sistema é uma aplicação completa de assistente virtual para clínicas médicas, desenvolvida em **FastAPI** (Python) com frontend estático (HTML/CSS/JavaScript) e integração às APIs da OpenAI / Azure OpenAI. O foco principal é fornecer um painel administrativo completo para gerenciamento de clínicas e um chat de atendimento inteligente.
 
 ## Arquitetura do Sistema
 
 ### Estrutura de Diretórios
 
 ```
-care-task4/
-├── public/                     # Arquivos públicos acessíveis via web
-│   ├── api/                   # Endpoints da API REST
-│   │   ├── chat.php          # Endpoint principal do chat
-│   │   ├── feedback.php      # Sistema de feedback das respostas
-│   │   ├── rewrite.php       # Sistema de reescrita colaborativa
-│   │   └── exchange-rate.php # API de taxa de câmbio
-│   ├── css/                  # Estilos da interface
-│   ├── js/                   # JavaScript frontend
-│   ├── img/                  # Recursos visuais
-│   ├── index.php             # Página inicial (redireciona para chat)
-│   ├── chat.php              # Interface principal do chat
-│   └── panel.php             # Painel administrativo
-├── src/                      # Código fonte backend
-│   ├── Config/               # Configurações do sistema
-│   │   └── Database.php      # Gerenciamento de conexão com banco
-│   ├── Controllers/          # Controladores MVC
-│   │   └── ChatController.php # Controlador principal do chat
-│   └── Services/             # Serviços especializados
-│       ├── OpenAIService.php    # Integração com OpenAI
-│       ├── AgentFunctions.php   # Funções específicas da clínica
-│       ├── DatabaseService.php  # Abstração do banco de dados
-│       ├── SessionService.php   # Gerenciamento de sessões
-│       ├── LoggerService.php    # Sistema de logging
-│       └── CurrencyService.php  # Conversão de moeda
-├── database/                 # Scripts e migrações do banco
-├── vendor/                   # Dependências Composer
-├── .env                      # Variáveis de ambiente
-├── composer.json             # Configuração de dependências
-└── *.md                      # Documentação específica
+smart-schedule/
+├── app/                        # Backend FastAPI
+│   ├── main.py                # Arquivo principal da aplicação
+│   ├── main_commented.py      # Versão comentada para fins didáticos
+│   ├── core/                  # Núcleo da aplicação
+│   │   └── db.py             # Gerenciamento de conexões (MySQL/PostgreSQL)
+│   ├── routers/              # Endpoints da API REST
+│   │   ├── exchange_rate.py  # API de taxa de câmbio
+│   │   ├── feedback.py       # Sistema de feedback e chat
+│   │   └── panel/            # Rotas do painel administrativo
+│   │       ├── configuracoes.py
+│   │       ├── convenios.py
+│   │       ├── excecoes.py
+│   │       ├── faq.py
+│   │       ├── horarios.py
+│   │       ├── pagamentos.py
+│   │       ├── parceiros.py
+│   │       ├── profissionais.py
+│   │       └── servicos.py
+│   ├── schemas/              # Modelos de dados Pydantic
+│   │   └── feedback.py
+│   └── services/            # Serviços especializados
+│       ├── currency_service.py  # Conversão de moeda
+│       └── openai_service.py    # Integração com OpenAI/Azure
+├── frontend/                # Frontend estático
+│   ├── index.html          # Interface principal do chat
+│   ├── panel.html          # Painel administrativo
+│   └── assets/             # Recursos estáticos
+│       ├── css/            # Estilos
+│       ├── js/             # JavaScript
+│       └── img/            # Imagens e ícones
+├── doc/                    # Documentação específica
+├── scripts/                # Scripts utilitários
+│   └── bootstrap_pg.py     # Bootstrap PostgreSQL
+├── requirements.txt        # Dependências Python
+└── .env                    # Variáveis de ambiente
 ```
 
 ### Padrão Arquitetural
 
-O sistema utiliza uma arquitetura **Service Layer** com elementos de **MVC**:
+O sistema utiliza uma arquitetura **REST API** com **FastAPI**:
 
-- **Controllers**: Orquestram o fluxo de dados entre frontend e services
-- **Services**: Encapsulam lógica de negócio específica
-- **Config**: Centralizão configurações e conexões
-- **API**: Interface REST para comunicação frontend/backend
+- **Routers**: Organizam endpoints por funcionalidade (chat, feedback, painel)
+- **Services**: Encapsulam lógica de negócio (OpenAI, conversão de moeda)
+- **Schemas**: Validação e serialização de dados com Pydantic
+- **Core**: Configurações centrais e conexões de banco
+- **Frontend**: Interface estática que consome a API REST
 
 ## Componentes Principais
 
-### 1. ChatController (src/Controllers/ChatController.php)
+### 1. FastAPI Application (app/main.py)
 
-**Responsabilidade**: Orquestrar todo o fluxo de conversação entre usuário e IA.
+**Responsabilidade**: Coordenar toda a aplicação e configurar middlewares.
 
-#### Métodos Principais:
+#### Funcionalidades Principais:
 
-##### `processMessage($message, $sessionId, $isFirst, $recursionCount)`
-- **Entrada**: Mensagem do usuário, ID da sessão, flag primeira mensagem, contador de recursão
-- **Saída**: Array com resposta formatada, tokens utilizados e funções chamadas
-- **Fluxo**:
-  1. Validação de recursão infinita (max 3 tentativas)
-  2. Inicialização do SessionService
-  3. Verificação de expiração de sessão
-  4. Construção do contexto conversacional
-  5. Verificação se é primeira pergunta (retorna boas-vindas)
-  6. Montagem de mensagens para IA
-  7. Chamada da OpenAI com funções disponíveis
-  8. Processamento de function calls em loop
-  9. Formatação de respostas específicas
-  10. Salvamento da conversa no banco
+##### Configuração CORS
+```python
+# CORS via env: APP_CORS_ORIGINS=dominio1,dominio2 (ou * para liberar)
+cors_origins_env = os.getenv("APP_CORS_ORIGINS", "*")
+allow_origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()] if cors_origins_env != "*" else ["*"]
+```
 
-##### `buildContext($sessionId)`
-- Busca configurações da clínica
-- Recupera histórico de conversas para treinamento
-- Obtém dados do paciente da sessão
-- Monta contexto temporal (data, hora, dia da semana)
-- **Retorna**: Array completo com todo contexto necessário
+##### Tratamento Global de Erros
+- **HTTPException**: Padroniza respostas de erro HTTP com mensagens em português
+- **Exception**: Captura erros inesperados e retorna mensagens amigáveis
+- **JSON Response**: Mantém formato consistente de resposta
 
-##### `buildSystemPrompt($contexto)`
-- Monta prompt complexo de 800+ linhas
-- Inclui regras críticas de comportamento
-- Adiciona exemplos de respostas boas/ruins
-- Define fluxos obrigatórios de agendamento
-- Configura validações de entrada
-- **Crítico**: Define que IA NUNCA pode inventar dados
+##### Registro de Routers
+- **API Principal**: `/api/chat`, `/api/feedback`, `/api/exchange-rate`
+- **Painel**: `/api/panel/*` para todas as funcionalidades administrativas
+- **Importação Segura**: Usa try/except para evitar falhas de inicialização
 
-##### `executeFunction($functionName, $args, $sessionId)`
-- Executa funções específicas da clínica
-- Completa automaticamente dados faltantes da sessão
-- Valida dados antes de executar
-- Implementa fallbacks inteligentes
-- Log detalhado de todas as operações
+### 2. OpenAIService (app/services/openai_service.py)
 
-### 2. OpenAIService (src/Services/OpenAIService.php)
-
-**Responsabilidade**: Comunicação e processamento da API OpenAI.
+**Responsabilidade**: Comunicação unificada com OpenAI e Azure OpenAI.
 
 #### Recursos Implementados:
 
-##### Suporte a Múltiplas APIs
-```php
-// Detecção automática do modelo
-$useResponsesApi = (strpos($normalizedModel, 'gpt-5') !== false || strpos($normalizedModel, 'o-') === 0);
+##### Suporte a Múltiplos Provedores
+```python
+# Azure OpenAI (preferencial se configurado)
+if self.azure_endpoint and self.azure_api_key and self.azure_deployment:
+    from openai import AzureOpenAI
+    client = AzureOpenAI(
+        api_version=self.azure_api_version,
+        azure_endpoint=self.azure_endpoint,
+        api_key=self.azure_api_key,
+    )
 
-// Chat Completions (GPT-3.5, GPT-4)
-POST https://api.openai.com/v1/chat/completions
-
-// Responses API (GPT-5, O-series)
-POST https://api.openai.com/v1/responses
+# OpenAI padrão (fallback)
+from openai import OpenAI
+client = OpenAI(api_key=self.api_key)
 ```
 
-##### Sistema de Retry com Backoff Exponencial
-```php
-if ($statusCode === 429 && $attempt < $maxRetries) {
-    $waitTime = pow(2, $attempt) * 1000000; // Microsegundos
-    usleep($waitTime);
-    continue;
-}
-```
+##### Configuração via Variáveis de Ambiente
+- **Azure**: `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_DEPLOYMENT`, `AZURE_OPENAI_API_VERSION`
+- **OpenAI**: `OPENAI_API_KEY`, `OPENAI_MODEL`
+- **Fallback**: Sistema funciona sem configuração, retornando respostas mock
 
-##### Processamento Inteligente de Respostas
-- **extractResponseText()**: Extrai texto limpo das respostas complexas
-- **handleFunctionCallSummary()**: Gera resumos específicos por função
-- **filterInternalNotations()**: Remove anotações técnicas
-- **cleanMalformedResponse()**: Detecta e corrige respostas incompletas
-
-##### Mapeamento de Function Calls
-- Converte format Responses API para Chat Completions
-- Preserva call_ids para continuidade
-- Normaliza argumentos JSON
-
-##### Logging Detalhado
-- Logs completos de request/response
-- Rastreamento de erros e timeouts
-- Monitoramento de usage/tokens
-
-### 3. AgentFunctions (src/Services/AgentFunctions.php)
-
-**Responsabilidade**: Implementar todas as funções específicas da clínica.
-
-#### Funções Implementadas:
-
-##### `buscar_profissionais_clinica($params)`
-- Busca profissionais ativos por especialidade
-- Suporte a busca flexível por nome
-- **Regra crítica**: SEMPRE usar antes de mencionar profissionais
-
-##### `buscar_servicos_clinica($params)`
-- Lista serviços oferecidos
-- Busca por palavras-chave
-- Fallback para todos os serviços se busca específica falhar
-
-##### `verificar_convenio($params)`
-- Verifica convênios aceitos/inativos
-- Retorna observações específicas
-- Diferencia status ativo/inativo
-
-##### `verificar_horarios_disponiveis($params)`
-- **Algoritmo inteligente**: Busca progressiva em incrementos (10, 20, 30, 40, 50, 60 dias)
-- Para quando encontra quantidade desejada de dias com horários
-- Filtra horários já passados (margem 30min)
-- Valida com exceções de agenda
-- **Crítico**: Base para toda validação de agendamentos
-
-```php
-// Algoritmo de busca progressiva
-$incrementos = [10, 20, 30, 40, 50, 60];
-foreach ($incrementos as $incremento) {
-    // Verifica período
-    if (count($resultado) >= $diasDesejados) {
-        break; // Para quando encontra suficientes
-    }
-}
-```
-
-##### `validar_horario_para_agendamento($params)`
-- **Validação dupla**: Verifica na lista de disponíveis + banco
-- Apenas aceita horários previamente calculados
-- Retorna horários alternativos se inválido
-
-##### `criar_agendamento($params)`
-- **Validações rigorosas**:
-  - Nome completo obrigatório (min 6 chars, 2 palavras)
-  - Lista de palavras proibidas (termos médicos/contextuais)
-  - Telefone válido (min 10 dígitos)
-  - Horário validado previamente
-- Busca/cria paciente automaticamente
-- Retorna dados formatados para resposta
-
-##### `consultar_agendamento_existente($params)`
-- **Prioriza telefone** como identificador principal
-- Busca flexível por partes do nome
-- Fallback inteligente se nome não bater
-
-##### `reagendar_consulta($params)`
-- Cancela agendamento atual + cria novo
-- Operação atômica (falha se qualquer etapa falhar)
-- Preserva dados do paciente
-
-##### `cancelar_agendamento($params)`
-- Validação de existência antes de cancelar
-- Horário normalizado para compatibilidade
-- Status 'cancelado' (soft delete)
-
-### 4. SessionService (src/Services/SessionService.php)
-
-**Responsabilidade**: Gerenciar estado temporário do usuário.
-
-#### Funcionalidades:
-
-##### Gestão de Dados do Paciente
-```php
-// Salvar dados
-$sessionKey = "paciente_{$this->sessionId}";
-$_SESSION[$sessionKey] = [
-    'nome' => $nome,
-    'telefone' => $telefone,
-    'timestamp' => time()
-];
-```
-
-##### Controle de Expiração
-- Timeout: 1 hora (3600 segundos)
-- Limpeza automática de dados expirados
-- Atualização de timestamp em cada interação
-
-##### Gestão de Etapas de Agendamento
-- Rastreamento do progresso do agendamento
-- Estados: 'dados_completos', 'horario_escolhido', etc.
-- Recuperação de estado em caso de desconexão
-
-### 5. LoggerService (src/Services/LoggerService.php)
-
-**Responsabilidade**: Sistema centralizado de logging.
-
-#### Características:
-
-##### Singleton Pattern
-```php
-public static function getInstance() {
-    if (self::$instance === null) {
-        self::$instance = new self();
-    }
-    return self::$instance;
-}
-```
-
-##### Níveis de Log
-- **DEBUG**: Informações detalhadas de desenvolvimento
-- **INFO**: Eventos importantes do sistema
-- **WARN**: Situações que podem gerar problemas
-- **ERROR**: Erros que precisam atenção
-
-##### Arquivo Centralizado
-- Localização: `/openai_debug.log`
-- Formato: `[YYYY-MM-DD HH:MM:SS] [LEVEL] message`
-- Thread-safe com `LOCK_EX`
-- Compatibilidade com `error_log()` existente
-
-### 6. DatabaseService (src/Services/DatabaseService.php)
-
-**Responsabilidade**: Abstração do acesso ao banco de dados.
-
-#### Métodos:
-
-##### `query($sql, $params)`
-- Prepared statements para segurança
-- Log automático de erros
-- Retorno padronizado (array associativo)
-
-##### `execute($sql, $params)`
-- Para operações INSERT/UPDATE/DELETE
-- Controle de transações
-- Contagem de linhas afetadas
+##### Processamento de Respostas
+- **Extração de conteúdo**: Obtém texto da resposta de forma segura
+- **Contagem de tokens**: Monitora usage para controle de custos
+- **Temperatura baixa**: Configurada em 0.2 para respostas mais consistentes
+- **Prompt do sistema**: Define comportamento básico em português brasileiro
 
 ##### Tratamento de Erros
-- Log em tabela `erros_sistema`
-- Falha silenciosa para evitar exposição de dados
-- Retry automático em situações específicas
+- **Configuração ausente**: Lança RuntimeError com mensagem clara
+- **Falhas de API**: Permite que endpoints de nível superior implementem fallbacks
+- **Validação**: Verifica configuração antes de tentar conectar
 
-### 7. CurrencyService (src/Services/CurrencyService.php)
+### 3. Database Service (app/core/db.py)
 
-**Responsabilidade**: Conversão de custos USD para BRL.
+**Responsabilidade**: Gerenciar conexões de banco de dados com suporte a múltiplos SGBDs.
 
-#### Funcionalidades:
-- Integração com API do Banco Central
-- Cache local da taxa de câmbio
-- Fallback para taxa padrão (R$ 5,00)
-- Atualização automática diária
+#### Funcionalidades Implementadas:
+
+##### Suporte Dual MySQL/PostgreSQL
+```python
+# PostgreSQL (preferencial se PGHOST definido)
+if pghost and psycopg is not None:
+    connection = psycopg.connect(
+        host=pghost,
+        port=int(os.getenv("PGPORT", "5432")),
+        user=os.getenv("PGUSER"),
+        password=os.getenv("PGPASSWORD"),
+        dbname=os.getenv("PGDATABASE"),
+        sslmode=os.getenv("PGSSLMODE", "require"),
+        row_factory=pg_dict_row,
+    )
+
+# MySQL (fallback)
+connection = pymysql.connect(
+    host=os.getenv("DB_HOST", "localhost"),
+    user=os.getenv("DB_USER", "root"),
+    password=os.getenv("DB_PASS", ""),
+    database=os.getenv("DB_NAME", "andreia"),
+    charset="utf8mb4",
+    cursorclass=pymysql.cursors.DictCursor,
+    autocommit=True,
+)
+```
+
+##### Características
+- **Generator Pattern**: Usa `yield` para gerenciar lifecycle da conexão
+- **Autocommit**: Habilitado por padrão em ambos os SGBDs
+- **Dict Cursor**: Retorna resultados como dicionários
+- **Detecção de Tipo**: Função `is_postgres_connection()` para queries específicas
+- **SSL**: Configuração automática para PostgreSQL
+
+### 4. CurrencyService (app/services/currency_service.py)
+
+**Responsabilidade**: Conversão de custos USD para BRL e formatação monetária.
+
+#### Funcionalidades Implementadas:
+
+##### Busca de Taxa de Câmbio
+```python
+def get_dollar_to_real_rate(self) -> float:
+    try:
+        rate = self._fetch_from_api()
+        if rate and rate > 0:
+            return rate
+        # fallback conservador
+        return 5.00
+    except Exception:
+        return 5.00
+```
+
+##### Integração com API Externa
+- **Fonte**: API pública do AwesomeAPI (`economia.awesomeapi.com.br`)
+- **Timeout**: 5 segundos para evitar travamentos
+- **User-Agent**: Customizado para identificação (`Andreia32/1.0`)
+- **Fallback**: Taxa conservadora de R$ 5,00 em caso de erro
+
+##### Conversão e Formatação
+```python
+def convert_dollar_to_real(self, dollar_amount: float) -> float:
+    rate = self.get_dollar_to_real_rate()
+    return dollar_amount * rate
+
+def format_real(self, value: float) -> str:
+    return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+```
+
+##### Características
+- **Formato brasileiro**: Vírgula para decimais, ponto para milhares
+- **Tolerância a falhas**: Nunca falha, sempre retorna um valor
+- **Performance**: Cliente HTTP configurado para reutilização
+- **Tratamento de erro silencioso**: Protege a aplicação de falhas externas
 
 ## Fluxo de Dados
 
@@ -298,631 +206,418 @@ public static function getInstance() {
 
 ```
 Frontend (chat.js) 
-    ↓ POST /api/chat.php
-API Endpoint 
-    ↓ new ChatController()
-ChatController 
-    ↓ processMessage()
-    ├── SessionService (recupera dados)
-    ├── buildContext() (monta contexto)
-    ├── OpenAIService (chama IA)
-    └── executeFunction() (executa ações)
+    ↓ POST /api/chat
+FastAPI Router (feedback.py)
+    ↓ @router.post("/chat")
+OpenAIService
+    ├── Azure OpenAI (preferencial)
+    ├── OpenAI (fallback)
+    └── Mock Response (sem configuração)
         ↓
-AgentFunctions 
-    ↓ DatabaseService
-Banco de Dados
+Resposta JSON com tokens/custo
+    ↓
+Frontend atualiza UI e estatísticas
 ```
 
-### 2. Processamento de Function Calls
+### 2. Requisição do Painel Administrativo
 
 ```
-OpenAI Response com function_call
+Frontend (panel.js)
+    ↓ GET/POST/PUT/DELETE /api/panel/{recurso}
+FastAPI Router (panel/{recurso}.py)
+    ↓ Depends(get_db)
+Database Connection (MySQL/PostgreSQL)
+    ↓ Cursor operations
+    ↓ CRUD operations
+Resposta JSON padronizada
     ↓
-ChatController detecta function_call
-    ↓
-executeFunction() com argumentos
-    ↓
-AgentFunctions.{functionName}()
-    ↓
-DatabaseService query/execute
-    ↓
-Resultado retornado para IA
-    ↓
-Nova chamada OpenAI com resultado
-    ↓
-Resposta final formatada
+Frontend atualiza tabelas/formulários
 ```
 
-### 3. Gestão de Sessão
+### 3. Fluxo de Feedback e Treinamento
 
 ```
-Usuário fornece dados
+Usuário clica thumbs up/down
+    ↓ POST /api/feedback
+Busca conversa mais recente
+    ↓ INSERT conversas_treinamento
+Dados salvos para melhoria do modelo
     ↓
-ChatController.extrairESalvarDados()
-    ↓ Análise de contexto
-    ↓ Validação estrutural
-SessionService.salvarDadosPaciente()
+Resposta de confirmação
+
+Usuário reescreve resposta
+    ↓ POST /api/rewrite
+Salva resposta original + reescrita
+    ↓ conversas_treinamento
+Sistema de aprendizado colaborativo
+```
+
+### 4. Taxa de Câmbio
+
+```
+Frontend solicita taxa
+    ↓ GET /api/exchange-rate
+CurrencyService.get_dollar_to_real_rate()
+    ↓ API Externa (awesomeapi.com.br)
+    ↓ Fallback (R$ 5,00)
+Resposta formatada em BRL
     ↓
-$_SESSION["paciente_{sessionId}"]
-    ↓
-Dados reutilizados em próximas chamadas
+Frontend calcula custos em reais
 ```
 
 ## Estrutura do Banco de Dados
 
-### Tabelas Principais:
+### Schema PostgreSQL (Preferencial)
+
+O sistema suporta PostgreSQL como banco principal, com schema definido em `doc/bootstrap_pg.sql`:
+
+#### `configuracoes`
+```sql
+CREATE TABLE IF NOT EXISTS configuracoes (
+  id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  chave VARCHAR(100) UNIQUE,
+  valor TEXT,
+  updated_at TIMESTAMP NULL
+);
+```
 
 #### `profissionais`
 ```sql
-CREATE TABLE profissionais (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS profissionais (
+  id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
     nome VARCHAR(255) NOT NULL,
     especialidade VARCHAR(255),
     crm VARCHAR(50),
-    duracao_consulta INT,
-    valor_consulta DECIMAL(10,2),
-    ativo TINYINT(1) DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  ativo INTEGER DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NULL
 );
 ```
 
-#### `agendamentos`
+#### `servicos_clinica`
 ```sql
-CREATE TABLE agendamentos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    paciente_id INT,
-    data_consulta DATE NOT NULL,
-    hora_consulta TIME NOT NULL,
-    status ENUM('confirmado', 'pendente', 'cancelado') DEFAULT 'pendente',
+CREATE TABLE IF NOT EXISTS servicos_clinica (
+  id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  nome VARCHAR(255) NOT NULL,
+  descricao TEXT,
+  valor NUMERIC(10,2),
+  categoria VARCHAR(100),
+  palavras_chave TEXT,
     observacoes TEXT,
-    procedimento VARCHAR(255),
+  preparo_necessario TEXT,
+  anestesia_tipo VARCHAR(100),
+  local_realizacao VARCHAR(255),
+  ativo INTEGER DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (paciente_id) REFERENCES pacientes(id)
+  updated_at TIMESTAMP NULL
 );
 ```
 
-#### `pacientes`
+#### `convenios_aceitos`
 ```sql
-CREATE TABLE pacientes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS convenios_aceitos (
+  id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
     nome VARCHAR(255) NOT NULL,
-    telefone VARCHAR(20) UNIQUE,
-    email VARCHAR(255),
-    session_id VARCHAR(255),
-    data_nascimento DATE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  registro_ans VARCHAR(50),
+  observacoes TEXT,
+  ativo INTEGER DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NULL
 );
 ```
 
 #### `horarios_disponiveis`
 ```sql
-CREATE TABLE horarios_disponiveis (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    dia_semana ENUM('segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'),
-    manha_inicio TIME NOT NULL,
-    manha_fim TIME NOT NULL,
+CREATE TABLE IF NOT EXISTS horarios_disponiveis (
+  id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  profissional_id INTEGER,
+  dia_semana VARCHAR(20) NOT NULL,
+  manha_inicio TIME,
+  manha_fim TIME,
     tarde_inicio TIME,
     tarde_fim TIME,
-    intervalo_minutos INT,
-    ativo INT DEFAULT 1,
-    profissional_id INT,
-    FOREIGN KEY (profissional_id) REFERENCES profissionais(id)
+  intervalo_minutos INTEGER,
+  ativo INTEGER DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NULL
 );
 ```
 
-#### `conversas`
+#### `conversas` e `conversas_treinamento`
 ```sql
-CREATE TABLE conversas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    session_id VARCHAR(255),
+CREATE TABLE IF NOT EXISTS conversas (
+  id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  session_id VARCHAR(100) NOT NULL,
     mensagem_usuario TEXT,
     resposta_agente TEXT,
-    funcao_chamada VARCHAR(100),
-    tokens_prompt INT DEFAULT 0,
-    tokens_resposta INT DEFAULT 0,
-    custo_estimado DECIMAL(10,6),
-    feedback_tipo ENUM('positivo', 'negativo'),
-    resposta_reescrita TEXT,
+  tokens_prompt INTEGER,
+  tokens_completion INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-```
 
-#### `configuracoes`
-```sql
-CREATE TABLE configuracoes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    chave VARCHAR(100) NOT NULL UNIQUE,
-    valor TEXT,
-    descricao VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+CREATE TABLE IF NOT EXISTS conversas_treinamento (
+  id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  conversa_id INTEGER NOT NULL,
+  tipo VARCHAR(50) NOT NULL,
+  resposta_original TEXT,
+  resposta_reescrita TEXT,
+  contexto_conversa TEXT,
+  feedback_tipo VARCHAR(20),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
-### Relacionamentos:
+### Outras Tabelas do Sistema
 
-```
-pacientes (1) ←→ (N) agendamentos
-profissionais (1) ←→ (N) horarios_disponiveis
-conversas → session_id (índice)
-```
+- **`excecoes_agenda`**: Feriados e exceções de horário
+- **`faq`**: Perguntas frequentes
+- **`formas_pagamento`**: Métodos de pagamento aceitos
+- **`parceiros`**: Laboratórios e parceiros da clínica
+- **`erros_sistema`**: Log de erros da aplicação
 
-## Sistema de Prompt Engineering
+### Compatibilidade MySQL
 
-### Estrutura do System Prompt
+O sistema mantém compatibilidade com MySQL como fallback, utilizando as mesmas estruturas mas com sintaxe MySQL (AUTO_INCREMENT, etc.).
 
-O prompt do sistema é construído dinamicamente com mais de 800 linhas, incluindo:
+## Frontend Interface
 
-#### 1. Contexto Base
-- Data/hora atual
-- Especialidades disponíveis
-- Dados da clínica (endereço, telefone)
-- Dados do paciente (se disponível)
+### Chat Interface (frontend/index.html)
 
-#### 2. Regras Críticas
-```
-### REGRA CRÍTICA - MÁXIMA PRIORIDADE
-**NUNCA USE:** "Vou verificar...", "Posso verificar...", "Deixe-me verificar..."
-**SEMPRE:** **CHAME A FUNÇÃO IMEDIATAMENTE** e informe o resultado
-```
+A interface principal do sistema oferece:
 
-#### 3. Fluxos Obrigatórios
-- **Agendamento**: Coleta dados → Chama verificar_horarios_disponiveis → Valida → Cria
-- **Reagendamento**: Consulta existente → Confirma dados → Reagenda
-- **Cancelamento**: Consulta existente → Confirma → Cancela
+#### Funcionalidades do Chat
+- **Interface limpa**: Campo de input com botão de envio
+- **Histórico visual**: Mensagens do usuário e assistente
+- **Indicador de digitação**: Feedback visual durante processamento
+- **Botões de feedback**: Thumbs up/down para avaliar respostas
+- **Sistema de reescrita**: Permite melhorar respostas da IA
 
-#### 4. Proibições Absolutas
-- Nunca inventar nomes de profissionais
-- Nunca confirmar horários sem validar
-- Nunca mencionar valores sem consultar banco
-- Nunca prosseguir sem nome completo + telefone
-
-#### 5. Exemplos de Treinamento
-- Respostas bem avaliadas (feedback positivo)
-- Respostas reescritas pelos usuários
-- Respostas mal avaliadas (para evitar)
-
-### Adaptação por Contexto
-
-O prompt se adapta baseado em:
-- **Dados já coletados**: Inclui nome/telefone se disponível
-- **Etapa do agendamento**: Ajusta instruções conforme progresso
-- **Histórico de conversas**: Inclui padrões de sucesso/falha
-- **Configurações da clínica**: Personaliza por especialidade
-
-## Sistema de Validações
-
-### 1. Validação de Entrada (Frontend)
-
+#### Painel de Debug
 ```javascript
-// Sanitização básica
-message = message.trim();
-
-// Verificação de tamanho
-if (message.length > 1000) {
-    alert('Mensagem muito longa');
-    return;
-}
-```
-
-### 2. Validação de Dados (Backend)
-
-#### Nome do Paciente
-```php
-// Lista de palavras proibidas
-$palavrasNaoNome = [
-    'mas', 'tambem', 'gordurinha', 'procedimento', 
-    'cirurgia', 'informações', 'agendamento'
-];
-
-// Validações estruturais
-- Mínimo 6 caracteres
-- Mínimo 2 palavras (nome + sobrenome)
-- Máximo 50 caracteres
-- Sem palavras contextuais/médicas
-```
-
-#### Telefone
-```php
-// Extração de números
-$telefone = preg_replace('/[^0-9]/', '', $telefone);
-
-// Validação de tamanho
-if (strlen($telefone) < 10) {
-    return ['erro' => 'Telefone deve ter pelo menos 10 dígitos'];
-}
-```
-
-#### Horários
-```php
-// Normalização
-private function normalizarHorario($hora) {
-    $hora = trim(strtolower($hora));
-    $hora = preg_replace('/\s*h(r)?\s*$/i', '', $hora); // Remove "h" ou "hr"
-    
-    if (preg_match('/^\d{1,2}$/', $hora)) {
-        return str_pad($hora, 2, '0', STR_PAD_LEFT) . ':00:00';
-    }
-    // ... outras normalizações
-}
-```
-
-### 3. Validação de Horários
-
-#### Algoritmo de Verificação
-```php
-public function validar_horario_para_agendamento($params) {
-    // 1. Busca horários disponíveis calculados
-    $horariosDisponiveis = $this->verificar_horarios_disponiveis(['data' => $data]);
-    
-    // 2. Verifica se horário está na lista
-    if (!in_array($hora, $dia['horarios'])) {
-        return ['valido' => false, 'horarios_disponiveis' => $lista];
-    }
-    
-    // 3. Dupla verificação no banco
-    $sql = "SELECT COUNT(*) FROM agendamentos WHERE data_consulta = ? AND hora_consulta = ?";
-    
-    // 4. Apenas retorna válido se passou todas as verificações
-    return ['valido' => true];
-}
-```
-
-## Sistema de Tratamento de Erros
-
-### 1. Hierarquia de Tratamento
-
-```php
-try {
-    // Operação principal
-} catch (RequestException $e) {
-    // Erro de comunicação com OpenAI
-    if ($statusCode === 429) {
-        // Rate limit - retry com backoff
-    }
-} catch (\Exception $e) {
-    // Erro geral - log e fallback
-} finally {
-    // Limpeza sempre executada
-}
-```
-
-### 2. Sistema de Retry
-
-#### Rate Limiting (OpenAI)
-```php
-if ($statusCode === 429 && $attempt < $maxRetries) {
-    $waitTime = pow(2, $attempt) * 1000000; // Backoff exponencial
-    usleep($waitTime);
-    continue;
-}
-```
-
-#### Fallbacks Inteligentes
-- **IA indisponível**: Mensagem específica para usuário
-- **Banco indisponível**: Cache de configurações
-- **Função falha**: Resposta genérica + log
-- **Sessão expirada**: Limpeza automática + recomeço
-
-### 3. Logging de Erros
-
-#### Tabela `erros_sistema`
-```sql
-INSERT INTO erros_sistema (tipo_erro, mensagem, created_at) 
-VALUES ('openai_error', ?, NOW())
-```
-
-#### Arquivo de Log
-```
-[2024-01-15 10:30:15] [ERROR] OpenAI timeout after 60s
-[2024-01-15 10:30:15] [ERROR] Database connection failed: SQLSTATE[HY000]
-[2024-01-15 10:30:15] [WARN] Rate limit reached, retrying in 2s
-```
-
-## Performance e Otimizações
-
-### 1. Otimizações de Banco
-
-#### Índices Estratégicos
-```sql
--- Busca rápida de agendamentos
-INDEX idx_data_hora (data_consulta, hora_consulta)
-INDEX idx_status (status)
-
--- Busca por paciente
-INDEX idx_telefone (telefone)
-INDEX idx_session_id (session_id)
-
--- Conversas
-INDEX idx_session_feedback (session_id, feedback_tipo)
-```
-
-#### Queries Otimizadas
-```php
-// Limite de resultados para evitar sobrecarga
-$limit = $limit ?? 3;
-$sql = "SELECT * FROM conversas_treinamento ORDER BY created_at DESC LIMIT ?";
-
-// Uso de prepared statements
-$stmt = $this->db->prepare($sql);
-$stmt->execute($params);
-```
-
-### 2. Otimizações de IA
-
-#### Limite de Tokens no Prompt
-```php
-// Seleção de exemplos prioritários
-private function selecionarExemplosPrioritarios($exemplos, $maxTokens = 8000) {
-    $tokensAtuais = 0;
-    foreach ($exemplos as $exemplo) {
-        if ($tokensAtuais + $tokensExemplo > $maxTokens) break;
-        // ... adiciona exemplo
-    }
-}
-```
-
-#### Cache de Respostas
-- Session data para evitar reprocessamento
-- Configurações da clínica em cache
-- Horários calculados temporariamente
-
-### 3. Otimizações de Frontend
-
-#### Debouncing
-```javascript
-// Evita múltiplos envios acidentais
-if (isProcessing) return;
-isProcessing = true;
-```
-
-#### Lazy Loading
-- Debug panel carregado sob demanda
-- Logs paginados
-- Imagens otimizadas
-
-## Sistema de Monitoramento
-
-### 1. Métricas Coletadas
-
-#### Uso da IA
-```php
-// Salvo em cada conversa
-$tokensPrompt = $usage['prompt_tokens'] ?? 0;
-$tokensResposta = $usage['completion_tokens'] ?? 0;
-$custoEstimado = $this->currencyService->convertDollarToReal($custoDolar);
-```
-
-#### Performance
-- Tempo de resposta por função
-- Taxa de sucesso de agendamentos
-- Frequência de errors/retries
-
-### 2. Dashboard de Debug
-
-#### Informações em Tempo Real
-```javascript
-// Estatísticas acumuladas
+// Estatísticas em tempo real
 document.getElementById('totalTokens').textContent = totalTokens;
 document.getElementById('totalCost').textContent = 'R$ ' + totalCost.toFixed(4);
 
-// Log em tempo real
+// Logs de debug para desenvolvimento
 addDebugLog('Função executada', { name: functionName, result: result });
 ```
 
-### 3. Alertas Automáticos
+#### Sistema de Sessão
+- **Session ID único**: Gerado automaticamente para cada conversa
+- **Persistência local**: Mantém contexto durante a sessão
+- **Nova conversa**: Botão para reiniciar com novo session ID
 
-#### Condições de Alerta
-- Erro rate > 10%
-- Custo diário > limite
-- Tempo resposta > 30s
-- Sessões expiradas > threshold
+### Painel Administrativo (frontend/panel.html)
 
-## Segurança
+Interface completa para gerenciamento da clínica:
 
-### 1. Validação de Entrada
+#### Abas do Sistema
+- **Configurações**: Nome da clínica, assistente virtual
+- **Profissionais**: CRUD completo (criar, listar, editar, excluir)
+- **Serviços**: Gerenciar procedimentos oferecidos
+- **Convênios**: Lista de convênios aceitos
+- **Horários**: Configuração de disponibilidade
+- **Exceções**: Feriados e bloqueios de agenda
+- **FAQ**: Perguntas frequentes
+- **Pagamentos**: Formas de pagamento aceitas
+- **Parceiros**: Laboratórios e clínicas parceiras
 
-#### Sanitização
-```php
-// Limpeza de UTF-8 malformado
-private function cleanUtf8($data) {
-    return iconv('UTF-8', 'UTF-8//IGNORE', $data);
-}
+#### Características do Painel
+```javascript
+// Configuração dinâmica da API
+const API_BASE = (window.CONFIG && window.CONFIG.API_BASE) ? 
+    window.CONFIG.API_BASE : 'http://127.0.0.1:8000/api';
 
-// Validação de tamanho
-if (strlen($message) > 1000) {
-    return ['error' => 'Mensagem muito longa'];
-}
+// Operações CRUD padronizadas
+fetch(`${API_BASE}/panel/profissionais`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(formData)
+});
 ```
 
-#### SQL Injection Protection
-```php
-// Sempre usar prepared statements
-$stmt = $this->db->prepare($sql);
-$stmt->execute($params);
+## Configuração e Execução
+
+### 1. Dependências do Sistema
+
+#### Python Requirements (requirements.txt)
 ```
-
-### 2. Gestão de Sessões
-
-#### Timeout Automático
-```php
-$tempoLimite = 3600; // 1 hora
-if ((time() - $dados['timestamp']) > $tempoLimite) {
-    $this->limparDados(); // Limpeza automática
-}
-```
-
-#### Isolamento de Dados
-```php
-// Sessões isoladas por sessionId
-$sessionKey = "paciente_{$this->sessionId}";
-$_SESSION[$sessionKey] = $dados;
-```
-
-### 3. Proteção de APIs
-
-#### Rate Limiting
-- Headers CORS apropriados
-- Validação de métodos HTTP
-- Timeout de requisições
-
-#### Validação de Dados
-```php
-// Verificação de campos obrigatórios
-if (!isset($input['message']) || !isset($input['sessionId'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Dados inválidos']);
-    exit;
-}
-```
-
-## Configuração e Deploy
-
-### 1. Dependências
-
-#### Composer (composer.json)
-```json
-{
-    "require": {
-        "php": ">=8.1",
-        "vlucas/phpdotenv": "^5.5",
-        "guzzlehttp/guzzle": "^7.5"
-    },
-    "autoload": {
-        "psr-4": { "App\\": "src/" }
-    }
-}
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+pydantic==2.8.2
+python-dotenv==1.0.1
+pymysql==1.1.0
+httpx==0.27.0
+openai==1.51.0
+psycopg[binary]==3.1.18
 ```
 
 #### Instalação
 ```bash
-composer install
+# Criar ambiente virtual
+python3 -m venv .venv
+source .venv/bin/activate  # Linux/Mac
+# .venv\Scripts\activate   # Windows
+
+# Instalar dependências
+pip install -r requirements.txt
 ```
 
-### 2. Configuração (.env)
+### 2. Variáveis de Ambiente
+
+Crie um arquivo `.env` na raiz do projeto:
+
 ```env
-# Banco de Dados
+# Banco de Dados PostgreSQL (preferencial)
+PGHOST=localhost
+PGPORT=5432
+PGUSER=postgres
+PGPASSWORD=sua_senha
+PGDATABASE=andreia
+PGSSLMODE=require
+
+# Banco de Dados MySQL (fallback)
 DB_HOST=localhost
 DB_NAME=andreia
 DB_USER=root
 DB_PASS=
 
-# OpenAI
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-3.5-turbo
+# Azure OpenAI (preferencial)
+AZURE_OPENAI_ENDPOINT=https://seu-recurso.openai.azure.com/
+AZURE_OPENAI_API_KEY=sua_chave_azure
+AZURE_OPENAI_API_VERSION=2025-05-01-preview
+AZURE_OPENAI_DEPLOYMENT=seu_deployment
 
-# Aplicação
-APP_DEBUG=true
-TIMEZONE=America/Sao_Paulo
+# OpenAI (alternativo)
+OPENAI_API_KEY=sk-sua_chave_openai
+OPENAI_MODEL=gpt-4o-mini
+
+# CORS (opcional)
+APP_CORS_ORIGINS=*
 ```
 
-### 3. Banco de Dados
+### 3. Configuração do Banco de Dados
 
-#### Criação
+#### PostgreSQL (Recomendado)
 ```bash
-mysql -u root -p andreia < database/schema.sql
+# Executar bootstrap
+python scripts/bootstrap_pg.py
 ```
 
-#### Dados Iniciais
+#### MySQL (Fallback)
 ```bash
-mysql -u root -p andreia < database/insert_profissionais_example.sql
+# Executar script SQL
+mysql -u root -p andreia < doc/bootstrap.sql
 ```
 
-### 4. Servidor Web
+### 4. Executando o Sistema
 
-#### Apache (.htaccess)
-```apache
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^api/(.*)$ api/$1.php [L]
-```
-
-#### Nginx
-```nginx
-location /api/ {
-    try_files $uri $uri.php =404;
-    fastcgi_pass php-fpm;
-    include fastcgi_params;
-}
-```
-
-## Manutenção e Operação
-
-### 1. Monitoramento de Logs
-
-#### Arquivo Principal
+#### Backend (FastAPI)
 ```bash
-tail -f openai_debug.log
+# Desenvolvimento
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+
+# Produção
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-#### Filtragem por Nível
+#### Frontend (Servidor Estático)
 ```bash
-grep "\[ERROR\]" openai_debug.log
-grep "\[WARN\]" openai_debug.log
+# Copiar configuração
+cp frontend/assets/js/config.example.js frontend/assets/js/config.js
+
+# Editar config.js com URL do backend
+# window.CONFIG = { API_BASE: 'http://127.0.0.1:8000/api' };
+
+# Servir arquivos estáticos
+python3 -m http.server 5500 -d frontend
+
+# Acessar: http://127.0.0.1:5500/index.html
 ```
 
-### 2. Limpeza de Dados
+## API Endpoints Disponíveis
 
-#### Sessões Antigas
-```sql
-DELETE FROM pacientes WHERE session_id IS NOT NULL 
-AND created_at < DATE_SUB(NOW(), INTERVAL 24 HOUR);
+### Chat e Feedback
+- **POST `/api/chat`**: Endpoint principal do chat com IA
+- **POST `/api/feedback`**: Registrar feedback (positivo/negativo)
+- **POST `/api/rewrite`**: Salvar reescrita de resposta
+- **GET `/api/exchange-rate`**: Obter taxa de câmbio USD→BRL
+
+### Painel Administrativo
+- **GET/POST/PUT/DELETE `/api/panel/configuracoes`**: Configurações gerais
+- **GET/POST/PUT/DELETE `/api/panel/profissionais`**: Gerenciar profissionais
+- **GET/POST/PUT/DELETE `/api/panel/servicos`**: Gerenciar serviços
+- **GET/POST/PUT/DELETE `/api/panel/convenios`**: Gerenciar convênios
+- **GET/POST/PUT/DELETE `/api/panel/horarios`**: Configurar horários
+- **GET/POST/PUT/DELETE `/api/panel/faq`**: Perguntas frequentes
+- **GET/POST/PUT/DELETE `/api/panel/pagamentos`**: Formas de pagamento
+- **GET/POST/PUT/DELETE `/api/panel/parceiros`**: Laboratórios parceiros
+- **GET/POST/PUT/DELETE `/api/panel/excecoes`**: Exceções de agenda
+
+### Características das APIs
+- **Validação automática**: Schemas Pydantic garantem dados corretos
+- **Respostas padronizadas**: JSON consistente em todas as rotas
+- **Tratamento de erros**: Mensagens em português brasileiro
+- **CORS configurável**: Suporte a diferentes domínios frontend
+
+## Recursos Adicionais
+
+### Scripts de Utilitários
+
+#### Bootstrap PostgreSQL (scripts/bootstrap_pg.py)
+- Script para inicialização automática do banco PostgreSQL
+- Parse inteligente de statements SQL com suporte a comentários
+- Execução transacional com rollback em caso de erro
+- Logs detalhados de progresso
+
+#### Documentação Específica (doc/)
+- **DOCUMENTACAO_ATUAL_FASTAPI.md**: Guia completo da migração PHP→FastAPI
+- **CAMBIO_MOEDA.md**: Detalhes sobre sistema de conversão monetária
+- **LOGGING_SYSTEM.md**: Estratégias de logging e monitoramento
+- **SESSION_IMPLEMENTATION.md**: Gerenciamento de estado de usuário
+
+### Arquivos de Configuração
+
+#### Frontend Configuration
+```javascript
+// frontend/assets/js/config.js
+window.CONFIG = {
+    API_BASE: 'http://127.0.0.1:8000/api'
+};
 ```
 
-#### Logs Antigos
-```sql
-DELETE FROM conversas WHERE created_at < DATE_SUB(NOW(), INTERVAL 30 DAY);
-```
+#### CSS Modules
+- **chat.css**: Estilos da interface de chat com animações
+- **panel.css**: Layout responsivo do painel administrativo
 
-### 3. Backup
+### Compatibilidade e Migrações
 
-#### Banco de Dados
-```bash
-mysqldump -u root -p andreia > backup_$(date +%Y%m%d).sql
-```
+#### Sistema Dual de Banco
+- **PostgreSQL**: Banco preferencial com recursos modernos
+- **MySQL**: Fallback para compatibilidade com sistemas legados
+- **Detecção automática**: Sistema escolhe o banco baseado nas variáveis de ambiente
 
-#### Logs
-```bash
-cp openai_debug.log logs/backup_$(date +%Y%m%d).log
-```
-
-### 4. Atualizações
-
-#### Código
-```bash
-git pull origin main
-composer update
-```
-
-#### Banco
-```bash
-mysql -u root -p andreia < database/migrations/new_migration.sql
-```
+#### APIs Múltiplas de IA
+- **Azure OpenAI**: Integração empresarial preferencial
+- **OpenAI**: Fallback para desenvolvimento
+- **Mock Mode**: Funciona sem configuração de IA para testes
 
 ## Considerações Finais
 
-### Pontos Fortes
-1. **Arquitetura modular** facilita manutenção
-2. **Validações rigorosas** garantem qualidade dos dados
-3. **Logging extensivo** facilita debugging
-4. **Sistema de retry** aumenta confiabilidade
-5. **Sessões temporárias** melhoram UX
-6. **Prompts dinâmicos** permitem aprendizado contínuo
+### Pontos Fortes da Arquitetura Atual
+1. **API REST moderna** com FastAPI e validação automática
+2. **Frontend desacoplado** permite fácil customização
+3. **Suporte dual de banco** garante flexibilidade
+4. **Sistema de feedback** permite melhoria contínua
+5. **Configuração flexível** via variáveis de ambiente
+6. **Documentação abrangente** facilita manutenção
 
-### Limitações Atuais
-1. **Dependência de sessões PHP** (não escala horizontalmente)
-2. **Prompts muito longos** podem impactar performance
-3. **Cache limitado** (apenas em sessão)
-4. **Monitoramento manual** de alertas
-5. **Backup manual** de dados críticos
+### Próximos Passos Recomendados
+1. **Implementação de autenticação** para o painel administrativo
+2. **Sistema de logs centralizados** (ELK Stack ou similar)
+3. **Testes automatizados** (pytest para backend, Jest para frontend)
+4. **CI/CD pipeline** para deploy automático
+5. **Monitoramento de aplicação** (Prometheus + Grafana)
+6. **Containerização** com Docker para facilitar deploys
 
-### Roadmap Técnico
-1. **Migração para Redis** (sessões distribuídas)
-2. **Cache inteligente** de configurações
-3. **Métricas automatizadas** (Prometheus/Grafana)
-4. **CI/CD pipeline** para deploys
-5. **Testes automatizados** (PHPUnit)
-6. **API versioning** para compatibilidade
-
-Este sistema representa uma implementação robusta e bem estruturada de um assistente virtual médico, com foco em dados reais, validações rigorosas e experiência de usuário natural.
+**Tecnologias utilizadas**: FastAPI, Python, PostgreSQL/MySQL, OpenAI/Azure OpenAI, HTML5, CSS3, JavaScript ES6+.
