@@ -63,10 +63,11 @@ function sendMessage() {
     
     // Envia para o servidor
     const API_BASE = (window.CONFIG && window.CONFIG.API_BASE) ? window.CONFIG.API_BASE : 'http://127.0.0.1:8000/api';
-    fetch(`${API_BASE}/chat`, {
+    fetch(`${API_BASE}/messages`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...(window.CONFIG && window.CONFIG.AUTH_TOKEN ? { 'Authorization': `Bearer ${window.CONFIG.AUTH_TOKEN}` } : {})
         },
         body: JSON.stringify({
             message: message,

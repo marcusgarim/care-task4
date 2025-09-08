@@ -36,6 +36,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 # Montagem dos routers
 try:
     from .routers import exchange_rate, feedback
+    from .routers import messages as chat_messages
     from .routers.panel import configuracoes as panel_configuracoes
     from .routers.panel import convenios as panel_convenios
     from .routers.panel import excecoes as panel_excecoes
@@ -58,5 +59,6 @@ try:
     app.include_router(panel_parceiros.router, prefix="/api")
     app.include_router(panel_profissionais.router, prefix="/api")
     app.include_router(panel_servicos.router, prefix="/api")
+    app.include_router(chat_messages.router, prefix="/api")
 except Exception:
     pass
