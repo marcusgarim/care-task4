@@ -7,20 +7,20 @@ Este projeto é um assistente virtual para uma clínica. Pense assim:
 
 ### O que mudou com a migração
 
-- Front e Back separados por HTTP: o `frontend/` chama a API em `http://127.0.0.1:8000/api` (configurável).
-- Centralização da base da API no arquivo `frontend/assets/js/config.js` (existe `config.example.js`).
+- Front e Back separados por HTTP: o `src/` chama a API em `http://127.0.0.1:8000/api` (configurável).
+- Centralização da base da API no arquivo `src/assets/js/config.js` (existe `config.example.js`).
 
 ### Como tudo se conecta (visão geral)
 
-1) Você digita uma mensagem na página `frontend/index.html`.
-2) O arquivo `frontend/assets/js/chat.js` envia sua mensagem para o servidor (endpoint `public/api/chat.php`).
+1) Você digita uma mensagem na página `src/index.html`.
+2) O arquivo `src/assets/js/chat.js` envia sua mensagem para o servidor (endpoint `public/api/chat.php`).
 3) No servidor, o `ChatController` junta contexto, chama a IA (`OpenAIService`) e executa funções de negócio (`AgentFunctions`).
 4) A resposta volta para a página do chat e aparece bonitinha na tela.
 5) A conversa e alguns números (tokens, custo estimado) são salvos no banco.
 
 ### Onde ficam as coisas (atual)
 
-- `frontend/`
+- `src/`
   - `index.html`: a página do chat.
   - `panel.html`: painel administrativo.
   - `assets/js/config.js` (copiar de `config.example.js`): define `window.CONFIG.API_BASE`.
@@ -83,7 +83,7 @@ Obs.: As tabelas exatas podem variar, mas o código usa nomes como `conversas`, 
 ### Arquivos e pontos que valem atenção
 
 - `frontend_oficial/frontend`: isso é um repositório Git dentro do seu repo. Se for intencional, transforme em submódulo. Se não for, remova do index com `git rm --cached -r frontend_oficial/frontend` e adicione ao `.gitignore`.
-- Imagem `Andréia`: houve normalização de nome/acentos. No `frontend/` é `assets/img/andreia.png`.
+- Imagem `Andréia`: houve normalização de nome/acentos. No `src/` é `assets/img/andreia.png`.
 
 ### Variáveis de ambiente (crie um `.env`)
 
@@ -100,9 +100,9 @@ Backend:
 4) `uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload`
 
 Frontend:
-1) Copie `frontend/assets/js/config.example.js` para `frontend/assets/js/config.js`.
+1) Copie `src/assets/js/config.example.js` para `src/assets/js/config.js`.
 2) Ajuste `API_BASE` conforme o endereço do backend.
-3) `python3 -m http.server 5500 -d frontend` e abra `http://127.0.0.1:5500/index.html`.
+3) `python3 -m http.server 5500 -d src` e abra `http://127.0.0.1:5500/index.html`.
 
 
 ### Branches (depois da migração)
@@ -113,6 +113,6 @@ Frontend:
 
 ### TL;DR (resumo)
 
-- Você conversa na página do chat → o backend fala com a OpenAI e com o banco → a resposta volta para a tela → tudo importante fica salvo. `dev` agora reflete o front que você vê em `frontend/`.
+- Você conversa na página do chat → o backend fala com a OpenAI e com o banco → a resposta volta para a tela → tudo importante fica salvo. `dev` agora reflete o front que você vê em `src/`.
 
 

@@ -4,7 +4,7 @@ Esta documentação explica, de forma didática, como o projeto está organizado
 
 ### Visão geral
 - **Backend**: `FastAPI` servindo endpoints REST em `http://127.0.0.1:8000/api`.
-- **Frontend**: páginas estáticas em `frontend/` servidas por um servidor HTTP simples (ou qualquer servidor de arquivos estáticos).
+- **Frontend**: páginas estáticas em `src/` servidas por um servidor HTTP simples (ou qualquer servidor de arquivos estáticos).
 - **Banco de dados**: MySQL (acessado via `PyMySQL`) para dados do painel, conversas e configurações.
 - **IA**: integração com Azure OpenAI (preferencial) ou OpenAI padrão; se não configurado, retorna resposta “mock” (de teste).
 - **Legado PHP**: guardado em `backup_php/` para consulta, não é mais utilizado na execução atual.
@@ -89,32 +89,32 @@ Observação: as rotas de `feedback`/`rewrite` requerem MySQL funcionando, pois 
 
 ---
 
-## Frontend (pasta `frontend/`)
+## Frontend (pasta `src/`)
 
-### `frontend/index.html`
+### `src/index.html`
 - Estrutura do chat (campo de texto, botão enviar, área de mensagens e painel de debug simples).
 
-### `frontend/assets/js/config.js` e `config.example.js`
+### `src/assets/js/config.js` e `config.example.js`
 - Centraliza a base da API via `window.CONFIG.API_BASE`.
 - Copie `config.example.js` para `config.js` e ajuste a URL do backend.
 
-### `frontend/assets/js/chat.js`
+### `src/assets/js/chat.js`
 - Controla o chat no navegador.
 - Usa `window.CONFIG.API_BASE` para chamar `POST /api/chat`.
 - Busca taxa de câmbio em `GET /api/exchange-rate` usando `API_BASE`.
 - Envia feedback em `POST /api/feedback` e reescritas em `POST /api/rewrite`.
 - Atualiza painel de estatísticas (tokens e custos) e registra logs de debug.
 
-### `frontend/panel.html`
+### `src/panel.html`
 - Interface do painel administrativo com abas (configurações, profissionais, serviços, convênios, horários, agenda, FAQ, pagamentos, parceiros).
 
-### `frontend/assets/js/panel.js`
+### `src/assets/js/panel.js`
 - Usa `window.CONFIG.API_BASE` como base para `/api/panel/...`.
 - Carrega dados e faz operações de CRUD chamando as rotas do backend.
 - Mostra mensagens de erro/sucesso na interface.
 - Requer MySQL ativo e com as tabelas esperadas.
 
-### `frontend/assets/css/*.css`
+### `src/assets/css/*.css`
 - Estilos do chat e do painel.
 
 ---
@@ -153,11 +153,11 @@ uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 
 ### 4) Rodar o frontend (estático)
 ```bash
-python3 -m http.server 5500 -d frontend
+python3 -m http.server 5500 -d src
 # Abra http://127.0.0.1:5500/index.html
 ```
 
-Antes de abrir, copie `frontend/assets/js/config.example.js` para `frontend/assets/js/config.js` e ajuste `API_BASE`.
+Antes de abrir, copie `src/assets/js/config.example.js` para `src/assets/js/config.js` e ajuste `API_BASE`.
 
 ---
 

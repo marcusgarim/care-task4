@@ -33,13 +33,13 @@ smart-schedule/
 │   └── services/            # Serviços especializados
 │       ├── currency_service.py  # Conversão de moeda
 │       └── openai_service.py    # Integração com OpenAI/Azure
-├── frontend/                # Frontend estático
-│   ├── index.html          # Interface principal do chat
-│   ├── panel.html          # Painel administrativo
-│   └── assets/             # Recursos estáticos
-│       ├── css/            # Estilos
-│       ├── js/             # JavaScript
-│       └── img/            # Imagens e ícones
+├── src/                     # Frontend estático
+│   ├── index.html           # Interface principal do chat
+│   ├── panel.html           # Painel administrativo
+│   └── assets/              # Recursos estáticos
+│       ├── css/             # Estilos
+│       ├── js/              # JavaScript
+│       └── img/             # Imagens e ícones
 ├── doc/                    # Documentação específica
 ├── scripts/                # Scripts utilitários
 │   └── bootstrap_pg.py     # Bootstrap PostgreSQL
@@ -381,7 +381,7 @@ O sistema mantém compatibilidade com MySQL como fallback, utilizando as mesmas 
 
 ## Frontend Interface
 
-### Chat Interface (frontend/index.html)
+### Chat Interface (src/index.html)
 
 A interface principal do sistema oferece:
 
@@ -407,7 +407,7 @@ addDebugLog('Função executada', { name: functionName, result: result });
 - **Persistência local**: Mantém contexto durante a sessão
 - **Nova conversa**: Botão para reiniciar com novo session ID
 
-### Painel Administrativo (frontend/panel.html)
+### Painel Administrativo (src/panel.html)
 
 Interface completa para gerenciamento da clínica:
 
@@ -524,13 +524,13 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 #### Frontend (Servidor Estático)
 ```bash
 # Copiar configuração
-cp frontend/assets/js/config.example.js frontend/assets/js/config.js
+cp src/assets/js/config.example.js src/assets/js/config.js
 
 # Editar config.js com URL do backend
 # window.CONFIG = { API_BASE: 'http://127.0.0.1:8000/api' };
 
 # Servir arquivos estáticos
-python3 -m http.server 5500 -d frontend
+python3 -m http.server 5500 -d src
 
 # Acessar: http://127.0.0.1:5500/index.html
 ```
@@ -580,7 +580,7 @@ python3 -m http.server 5500 -d frontend
 
 #### Frontend Configuration
 ```javascript
-// frontend/assets/js/config.js
+// src/assets/js/config.js
 window.CONFIG = {
     API_BASE: 'http://127.0.0.1:8000/api'
 };
