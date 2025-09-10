@@ -10,7 +10,8 @@ let exchangeRate = 5.00; // Taxa de câmbio padrão
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     initializeChat();
-    createParticles();
+    bindModernLayout();
+    // Sem partículas no novo layout
 });
 
 function initializeChat() {
@@ -22,23 +23,29 @@ function initializeChat() {
             sendMessage();
         }
     });
+    document.getElementById('messageInput').addEventListener('input', function(e){ autoResize(e.target); });
     
     // Debug panel
-    document.getElementById('toggleDebug').addEventListener('click', toggleDebugPanel);
-    document.getElementById('clearLogs').addEventListener('click', clearDebugLogs);
-    document.getElementById('exportLogs').addEventListener('click', exportDebugLogs);
+    var tgl = document.getElementById('toggleDebug');
+    var clr = document.getElementById('clearLogs');
+    var exp = document.getElementById('exportLogs');
+    if (tgl) tgl.addEventListener('click', toggleDebugPanel);
+    if (clr) clr.addEventListener('click', clearDebugLogs);
+    if (exp) exp.addEventListener('click', exportDebugLogs);
     
-    // Panel button
-    document.getElementById('panelBtn').addEventListener('click', openPanel);
+    // Panel button (compat: moderno e antigo)
+    var panel = document.getElementById('panelBtn');
+    if (panel) panel.addEventListener('click', openPanel);
     
-    // Adiciona botão de nova conversa
+    // Botoes de nova conversa
     addNewConversationButton();
     
     // Busca taxa de câmbio atual
     fetchExchangeRate();
     
     // Focus no input
-    document.getElementById('messageInput').focus();
+    var mi = document.getElementById('messageInput');
+    if (mi) mi.focus();
 }
 
 function generateSessionId() {
@@ -109,33 +116,48 @@ function addMessage(type, content) {
     const messagesContainer = document.getElementById('chatMessages');
     const messageId = 'msg_' + (++messageIdCounter);
     
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${type}`;
-    messageDiv.id = messageId;
-    
-    const avatar = document.createElement('div');
-    avatar.className = 'avatar';
-    // Removido textContent pois agora usamos imagens de fundo
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'content';
-    
-    const p = document.createElement('p');
-    p.innerHTML = formatMessage(content);
-    contentDiv.appendChild(p);
-    
-    // Adiciona botões de feedback para mensagens do bot
-    if (type === 'bot') {
-        const feedbackDiv = createFeedbackButtons(messageId);
-        contentDiv.appendChild(feedbackDiv);
+    // Layout moderno
+    if (document.querySelector('.chat-container')) {
+        const wrap = document.createElement('div');
+        wrap.className = `message-wrapper ${type === 'user' ? 'user' : 'assistant'}`;
+        const inner = document.createElement('div');
+        inner.className = 'message';
+        const avatar = document.createElement('div');
+        avatar.className = `avatar ${type === 'user' ? 'user-avatar' : 'assistant-avatar'}`;
+        avatar.textContent = type === 'user' ? 'U' : 'S';
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        const textDiv = document.createElement('div');
+        textDiv.className = 'message-text';
+        textDiv.innerHTML = `<p>${formatMessage(content)}</p>`;
+        contentDiv.appendChild(textDiv);
+        inner.appendChild(avatar);
+        inner.appendChild(contentDiv);
+        wrap.appendChild(inner);
+        wrap.id = messageId;
+
+        messagesContainer.appendChild(wrap);
+    } else {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+        messageDiv.id = messageId;
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'content';
+        const p = document.createElement('p');
+        p.innerHTML = formatMessage(content);
+        contentDiv.appendChild(p);
+        if (type === 'bot') {
+            const feedbackDiv = createFeedbackButtons(messageId);
+            contentDiv.appendChild(feedbackDiv);
+        }
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(contentDiv);
+        messagesContainer.appendChild(messageDiv);
     }
-    
-    messageDiv.appendChild(avatar);
-    messageDiv.appendChild(contentDiv);
-    
-    messagesContainer.appendChild(messageDiv);
+
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    
     return messageId;
 }
 
@@ -270,23 +292,31 @@ function closeRewriteModal() {
 
 function showTyping() {
     const messagesContainer = document.getElementById('chatMessages');
-    
-    const typingDiv = document.createElement('div');
-    typingDiv.className = 'message bot typing-indicator';
-    typingDiv.id = 'typingIndicator';
-    
-    const avatar = document.createElement('div');
-    avatar.className = 'avatar';
-    // Usa a mesma imagem da Andréia para o indicador de digitação
-    
-    const content = document.createElement('div');
-    content.className = 'content';
-    content.innerHTML = '<span></span><span></span><span></span>';
-    
-    typingDiv.appendChild(avatar);
-    typingDiv.appendChild(content);
-    
-    messagesContainer.appendChild(typingDiv);
+    if (document.querySelector('.chat-container')) {
+        const wrap = document.createElement('div');
+        wrap.className = 'message-wrapper assistant';
+        wrap.id = 'typingIndicator';
+        wrap.innerHTML = `
+            <div class="message">
+                <div class="avatar assistant-avatar">S</div>
+                <div class="message-content">
+                    <div class="typing-indicator"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>
+                </div>
+            </div>`;
+        messagesContainer.appendChild(wrap);
+    } else {
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'message bot typing-indicator';
+        typingDiv.id = 'typingIndicator';
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        const content = document.createElement('div');
+        content.className = 'content';
+        content.innerHTML = '<span></span><span></span><span></span>';
+        typingDiv.appendChild(avatar);
+        typingDiv.appendChild(content);
+        messagesContainer.appendChild(typingDiv);
+    }
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
@@ -352,12 +382,13 @@ function addDebugLog(label, data) {
     debugLogs.push(logEntry);
     
     const logDiv = document.getElementById('debugLogs');
-    const entryDiv = document.createElement('div');
-    entryDiv.className = 'debug-log-entry';
-    entryDiv.innerHTML = `<strong>[${timestamp}]</strong> ${label}: ${JSON.stringify(data, null, 2)}`;
-    
-    logDiv.appendChild(entryDiv);
-    logDiv.scrollTop = logDiv.scrollHeight;
+    if (logDiv) {
+        const entryDiv = document.createElement('div');
+        entryDiv.className = 'debug-log-entry';
+        entryDiv.innerHTML = `<strong>[${timestamp}]</strong> ${label}: ${JSON.stringify(data, null, 2)}`;
+        logDiv.appendChild(entryDiv);
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
 }
 
 function clearDebugLogs() {
@@ -453,9 +484,40 @@ localStorage.removeItem('sessionId');
 
 // Função para abrir o painel
 function openPanel() {
-    // Log para debug
     addDebugLog('Botão Painel clicado', { timestamp: new Date().toISOString() });
-    
-    // Redireciona para o painel administrativo
     window.location.href = 'panel.html';
+}
+
+function bindModernLayout() {
+    // Eventos do layout
+    var menuBtn = document.getElementById('menuBtn');
+    if (menuBtn) menuBtn.addEventListener('click', function(){
+        var el = document.getElementById('sidebar');
+        if (el) el.classList.toggle('hidden');
+    });
+    var btn1 = document.getElementById('newConversationHeaderBtn');
+    var btn2 = document.getElementById('newConversationSidebarBtn');
+    if (btn1) btn1.addEventListener('click', startNewConversation);
+    if (btn2) btn2.addEventListener('click', startNewConversation);
+
+    // Preenche lista de conversas placeholder
+    var list = document.getElementById('conversationList');
+    if (list && list.children.length === 0) {
+        ['Consulta de rotina','Agendamento exame','Dúvidas sobre preparo','Remarcar consulta'].forEach(function(t){
+            var item = document.createElement('div');
+            item.className = 'conversation-item';
+            item.textContent = t;
+            list.appendChild(item);
+        });
+        if (list.firstChild) list.firstChild.classList.add('active');
+    }
+
+    // Sugestões da tela inicial
+    document.querySelectorAll('.suggestion-card').forEach(function(el){
+        el.addEventListener('click', function(){
+            var txt = el.getAttribute('data-suggestion') || el.textContent.trim();
+            var mi = document.getElementById('messageInput');
+            if (mi) { mi.value = txt; sendMessage(); }
+        });
+    });
 }

@@ -3,64 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minha Clínica Inteligente</title>
+    <title>Smart Schedule - Assistente Virtual</title>
     <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
-    <link rel="stylesheet" href="assets/css/chat.css">
+    <link rel="stylesheet" href="assets/css/smart.css">
+    
 </head>
 <body>
-    <div id="particles-bg"></div>
-    
-    <div class="chat-container">
-        <div class="chat-header">
-            <div class="header-content">
-                <div class="header-text">
-                    <h1>Assistente Virtual</h1>
-                    <p>Clínica Médica</p>
-                </div>
-                <div class="header-buttons">
-                    <button class="panel-btn" id="panelBtn">Painel</button>
-                </div>
+    <!-- Novo layout -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">S</div>
+                <span class="logo-text">Smart Schedule</span>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn" id="menuBtn">Menu</button>
+                <button class="header-btn new-chat-btn" id="newConversationHeaderBtn">Nova Conversa</button>
+                <button class="header-btn" id="panelBtn">Painel Admin</button>
             </div>
         </div>
-        
-        <div class="chat-messages" id="chatMessages">
-            <div class="message bot">
-                
+    </header>
+
+    <div class="main-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="new-conversation-btn" id="newConversationSidebarBtn">
+                    <span>+</span>
+                    <span>Nova conversa</span>
+                </button>
             </div>
-        </div>
-        
-        <div class="chat-input-container">
-            <input 
-                type="text" 
-                id="messageInput" 
-                placeholder="Digite sua mensagem..." 
-                autocomplete="off"
-            >
-            <button id="sendButton">
-                <svg width="24" height="24" viewBox="0 0 24 24">
-                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                </svg>
-            </button>
-        </div>
+            <div class="conversation-list" id="conversationList"></div>
+        </aside>
+
+        <main class="chat-container">
+            <div class="messages-container">
+                <div id="messagesContainer">
+                    <div class="welcome-screen" id="welcomeScreen">
+                        <h1 class="welcome-title">Assistente Virtual</h1>
+                        <p class="welcome-subtitle">Como posso ajudar você hoje?</p>
+                        <div class="suggestions-grid">
+                            <div class="suggestion-card" data-suggestion="Quero agendar uma consulta">
+                                <div class="suggestion-title">Agendar consulta</div>
+                                <div class="suggestion-text">Marque um horário especialistas</div>
+                            </div>
+                            <div class="suggestion-card" data-suggestion="Quais exames vocês fazem?">
+                                <div class="suggestion-title">Exames disponíveis</div>
+                                <div class="suggestion-text">Conheça nossos serviços</div>
+                            </div>
+                            <div class="suggestion-card" data-suggestion="Quais convênios são aceitos?">
+                                <div class="suggestion-title">Convênios</div>
+                                <div class="suggestion-text">Planos de saúde aceitos</div>
+                            </div>
+                            <div class="suggestion-card" data-suggestion="Preciso remarcar minha consulta">
+                                <div class="suggestion-title">Remarcar</div>
+                                <div class="suggestion-text">Altere seu agendamento</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="chatMessages"></div>
+                </div>
+            </div>
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea 
+                        class="input-box" 
+                        id="messageInput"
+                        placeholder="Digite sua mensagem..."
+                        rows="1"
+                    ></textarea>
+                    <button class="send-button" id="sendButton">
+                        <svg class="send-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    Smart Schedule pode cometer erros. Considere verificar informações importantes.
+                </div>
+            </div>
+        </main>
     </div>
     
-    <div class="debug-panel" id="debugPanel">
-        <div class="debug-header">
-            <h3>Debug Console</h3>
-            <button id="toggleDebug">v</button>
-        </div>
-        <div class="debug-content" id="debugContent">
-            <div class="debug-stats">
-                <span>Tokens: <strong id="totalTokens">0</strong></span>
-                <span>Custo: <strong id="totalCost">R$ 0,00</strong></span>
-            </div>
-            <div class="debug-logs" id="debugLogs"></div>
-            <div class="debug-actions">
-                <button id="clearLogs">Limpar</button>
-                <button id="exportLogs">Exportar</button>
-            </div>
-        </div>
-    </div>
+    
     
     <script src="assets/js/config.js"></script>
     <script src="assets/js/chat.js"></script>
