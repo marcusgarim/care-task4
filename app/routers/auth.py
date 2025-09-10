@@ -4,6 +4,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 import os
 from datetime import datetime, timedelta
+from typing import Optional, Dict
 import httpx
 import jwt
 
@@ -21,11 +22,11 @@ security = HTTPBearer(auto_error=True)
 
 
 class GoogleAuthPayload(BaseModel):
-    credential: str | None = None  # id_token (JWT do Google)
-    access_token: str | None = None  # access_token OAuth2 do Google
+    credential: Optional[str] = None  # id_token (JWT do Google)
+    access_token: Optional[str] = None  # access_token OAuth2 do Google
 
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=JWT_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
@@ -48,7 +49,7 @@ async def auth_google(payload: GoogleAuthPayload, request: Request):
     if not payload.credential and not payload.access_token:
         raise HTTPException(status_code=400, detail="Informe credential (id_token) ou access_token")
 
-    user_info: dict | None = None
+    user_info: Optional[dict] = None
 
     async with httpx.AsyncClient(timeout=8.0) as client:
         # Preferir validar id_token quando disponível
@@ -125,7 +126,7 @@ async def google_login():
 
 
 @router.get("/google/callback")
-async def google_callback(code: str | None = None, error: str | None = None):
+async def google_callback(code: Optional[str] = None, error: Optional[str] = None):
     if error:
         raise HTTPException(status_code=400, detail=f"Erro no login Google: {error}")
     if not code:
@@ -154,7 +155,7 @@ async def google_callback(code: str | None = None, error: str | None = None):
             raise HTTPException(status_code=401, detail="Token inválido do Google")
 
         # Preferir validar id_token
-        user_info: dict | None = None
+        user_info: Optional[dict] = None
         if id_token:
             r = await client.get("https://oauth2.googleapis.com/tokeninfo", params={"id_token": id_token})
             if r.status_code != 200:

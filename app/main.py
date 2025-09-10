@@ -34,32 +34,35 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     })
 
 # Montagem dos routers
+# Essenciais (não engolir erros)
+from .routers import exchange_rate, feedback
+from .routers import messages as chat_messages
+
+app.include_router(exchange_rate.router, prefix="/api")
+app.include_router(feedback.router, prefix="/api")
+
 try:
-    from .routers import exchange_rate, feedback, auth
-    from .routers import messages as chat_messages
-    from .routers.panel import configuracoes as panel_configuracoes
-    from .routers.panel import convenios as panel_convenios
-    from .routers.panel import excecoes as panel_excecoes
-    from .routers.panel import faq as panel_faq
-    from .routers.panel import horarios as panel_horarios
-    from .routers.panel import pagamentos as panel_pagamentos
-    from .routers.panel import parceiros as panel_parceiros
-    from .routers.panel import profissionais as panel_profissionais
-    from .routers.panel import servicos as panel_servicos
-
-    app.include_router(exchange_rate.router, prefix="/api")
-    app.include_router(feedback.router, prefix="/api")
+    from .routers import auth
     app.include_router(auth.router, prefix="/api")
+except Exception as e:
+    print(f"[WARN] Auth não carregado: {e}")
+app.include_router(chat_messages.router, prefix="/api")
 
-    app.include_router(panel_configuracoes.router, prefix="/api")
-    app.include_router(panel_convenios.router, prefix="/api")
-    app.include_router(panel_excecoes.router, prefix="/api")
-    app.include_router(panel_faq.router, prefix="/api")
-    app.include_router(panel_horarios.router, prefix="/api")
-    app.include_router(panel_pagamentos.router, prefix="/api")
-    app.include_router(panel_parceiros.router, prefix="/api")
-    app.include_router(panel_profissionais.router, prefix="/api")
-    app.include_router(panel_servicos.router, prefix="/api")
-    app.include_router(chat_messages.router, prefix="/api")
-except Exception:
-    pass
+# Painel (tolerante a falhas – loga erro e segue)
+def _try_include(router_module_path: str, attr: str = "router") -> None:
+    try:
+        module = __import__(router_module_path, fromlist=[attr])
+        r = getattr(module, attr)
+        app.include_router(r, prefix="/api")
+    except Exception as e:
+        print(f"[WARN] Falha ao carregar router {router_module_path}: {e}")
+
+_try_include("app.routers.panel.configuracoes")
+_try_include("app.routers.panel.convenios")
+_try_include("app.routers.panel.excecoes")
+_try_include("app.routers.panel.faq")
+_try_include("app.routers.panel.horarios")
+_try_include("app.routers.panel.pagamentos")
+_try_include("app.routers.panel.parceiros")
+_try_include("app.routers.panel.profissionais")
+_try_include("app.routers.panel.servicos")
