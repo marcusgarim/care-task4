@@ -3,107 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Administrativo - MCI</title>
+    <title>Smart Schedule - Painel Administrativo</title>
     <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
-    <link rel="stylesheet" href="assets/css/panel.css">
+    <link rel="stylesheet" href="assets/css/panel_modern.css">
 </head>
 <body>
-    <div class="panel-container">
-        <!-- Header -->
-        <header class="panel-header">
-            <div class="header-content">
-                <h1>Painel Administrativo</h1>
-                <button class="back-btn" onclick="window.location.href='index.html'">Voltar ao Chat</button>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">S</div>
+                <span class="logo-text">Smart Schedule Admin</span>
             </div>
-        </header>
-
-        <!-- Tabs Navigation -->
-        <nav class="tabs-nav">
-            <button class="tab-nav-btn prev" onclick="scrollTabs('prev')" title="Anterior">Anterior</button>
-            <div class="tabs-container">
-                <button class="tab-btn active" data-tab="configuracoes">Configurações</button>
-                <button class="tab-btn" data-tab="profissionais">Profissionais</button>
-                <button class="tab-btn" data-tab="servicos">Serviços</button>
-                <button class="tab-btn" data-tab="convenios">Convênios</button>
-                <button class="tab-btn" data-tab="horarios">Horários</button>
-                <button class="tab-btn" data-tab="agenda">Exceções Agenda</button>
-                <button class="tab-btn" data-tab="faq">FAQ</button>
-                <button class="tab-btn" data-tab="pagamentos">Pagamentos</button>
-                <button class="tab-btn" data-tab="parceiros">Parceiros</button>
+            <div class="header-actions">
+                <div class="user-info"><span>Administrador</span></div>
+                <button class="header-btn" onclick="goToChat()">Ir para Chat</button>
+                <button class="header-btn primary" onclick="logout()">Sair</button>
             </div>
-            <button class="tab-nav-btn next" onclick="scrollTabs('next')" title="Próximo">Próximo</button>
-        </nav>
+        </div>
+    </header>
 
-        <!-- Tab Content -->
-        <main class="tab-content">
-            <!-- Configurações -->
-            <div id="configuracoes" class="tab-panel active">
-                <h2>Configurações Gerais</h2>
-                <form id="configForm" class="form-grid">
-                    <div class="form-group">
-                        <label for="nome_assistente">Nome do Assistente Virtual</label>
-                        <input type="text" id="nome_assistente" name="nome_assistente">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="nome_clinica">Nome da Clínica</label>
-                        <input type="text" id="nome_clinica" name="nome_clinica">
-                    </div>
-                    
-             
-                    
-                    <div class="form-group full-width">
-                        <label for="endereco">Endereço Completo</label>
-                        <input type="text" id="endereco" name="endereco">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="telefone">Telefone Principal</label>
-                        <input type="tel" id="telefone" name="telefone">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="whatsapp">WhatsApp</label>
-                        <input type="tel" id="whatsapp" name="whatsapp">
-                    </div>
-                    
-                   
-                    
-                    <div class="form-group">
-                        <label for="politica_cancelamento">Prazo Cancelamento (horas)</label>
-                        <input type="number" id="politica_cancelamento" name="politica_cancelamento">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="link_google_maps">Link Google Maps</label>
-                        <input type="url" id="link_google_maps" name="link_google_maps">
-                    </div>
-                    
-                    <div class="form-group full-width">
-                        <label for="referencias">Referências de Localização</label>
-                        <input type="text" id="referencias" name="referencias">
-                    </div>
-                    
-                    <div class="form-group full-width">
-                        <label for="link_avaliacao_google">Link Avaliação Google</label>
-                        <input type="url" id="link_avaliacao_google" name="link_avaliacao_google">
-                    </div>
-                    
-                    <div class="form-group full-width">
-                        <label for="mensagem_boas_vindas">Mensagem de Boas-vindas</label>
-                        <textarea id="mensagem_boas_vindas" name="mensagem_boas_vindas" rows="3"></textarea>
-                    </div>
-                    
-                    <div class="form-group full-width">
-                        <label for="mensagem_pos_consulta">Mensagem Pós-consulta</label>
-                        <textarea id="mensagem_pos_consulta" name="mensagem_pos_consulta" rows="3"></textarea>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="submit" class="btn-primary">Salvar Configurações</button>
-                        <button type="button" class="btn-secondary" onclick="loadConfiguracoes()">Recarregar</button>
-                    </div>
-                </form>
+    <!-- Tabs Navigation -->
+    <div class="tabs-container">
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('dashboard')">Dashboard</div>
+            <div class="tab" onclick="showTab('profissionais')">Profissionais</div>
+            <div class="tab" onclick="showTab('servicos')">Serviços</div>
+            <div class="tab" onclick="showTab('convenios')">Convênios</div>
+            <div class="tab" onclick="showTab('horarios')">Horários</div>
+            <div class="tab" onclick="showTab('agenda')">Agenda</div>
+            <div class="tab" onclick="showTab('excecoes')">Exceções</div>
+            <div class="tab" onclick="showTab('faq')">FAQ</div>
+            <div class="tab" onclick="showTab('pagamentos')">Pagamentos</div>
+            <div class="tab" onclick="showTab('parceiros')">Parceiros</div>
+            <div class="tab" onclick="showTab('configuracoes')">Configurações</div>
+        </div>
+    </div>
+
+    <!-- Conteúdo -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <!-- Dashboard (exemplo) -->
+            <div class="tab-section active" id="dashboard-tab">
+                <div class="page-header">
+                    <h1 class="page-title">Dashboard</h1>
+                    <p class="page-subtitle">Visão geral do sistema</p>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-label">Agendamentos Hoje</div><div class="stat-value">24</div><div class="stat-change">+12% vs ontem</div></div>
+                    <div class="stat-card"><div class="stat-label">Novos Pacientes</div><div class="stat-value">8</div><div class="stat-change">+5% esta semana</div></div>
+                    <div class="stat-card"><div class="stat-label">Taxa de Ocupação</div><div class="stat-value">87%</div><div class="stat-change negative">-3% vs média</div></div>
+                    <div class="stat-card"><div class="stat-label">Mensagens do Chat</div><div class="stat-value">142</div><div class="stat-change">+28% hoje</div></div>
+                </div>
+                <div class="table-container">
+                    <div class="table-header"><h2 class="table-title">Próximos Agendamentos</h2></div>
+                    <table class="data-table"><thead><tr><th>Horário</th><th>Paciente</th><th>Profissional</th><th>Serviço</th><th>Status</th></tr></thead><tbody>
+                        <tr><td>14:30</td><td>Maria Silva</td><td>Dr. Carlos Mendes</td><td>Consulta</td><td><span class="status-badge active">Confirmado</span></td></tr>
+                        <tr><td>15:00</td><td>João Santos</td><td>Dra. Ana Costa</td><td>Retorno</td><td><span class="status-badge pending">Pendente</span></td></tr>
+                    </tbody></table>
+                </div>
             </div>
 
             <!-- Profissionais -->
@@ -300,13 +258,34 @@
                     </table>
                 </div>
             </div>
-        </main>
+            <!-- Profissionais -->
+            <div class="tab-section" id="profissionais-tab">
+                <div class="page-header"><h1 class="page-title">Profissionais</h1><p class="page-subtitle">Gerenciar médicos e especialistas</p></div>
+                <div class="form-section">
+                    <h2 class="table-title">Adicionar Profissional</h2>
+                    <div class="form-grid">
+                        <div class="form-group"><label class="form-label">Nome Completo</label><input type="text" class="form-input" id="prof_nome" placeholder="Dr. João Silva"></div>
+                        <div class="form-group"><label class="form-label">Especialidade</label><input type="text" class="form-input" id="prof_especialidade" placeholder="Cardiologia"></div>
+                        <div class="form-group"><label class="form-label">CRM</label><input type="text" class="form-input" id="prof_crm" placeholder="12345-SP"></div>
+                        <div class="form-group"><label class="form-label">Telefone</label><input type="tel" class="form-input" id="prof_telefone" placeholder="(11) 98765-4321"></div>
+                    </div>
+                    <div style="margin-top: 20px;"><button class="btn btn-primary" onclick="addProfissional()">Adicionar Profissional</button></div>
+                </div>
+                <div class="table-container">
+                    <div class="table-header"><h2 class="table-title">Lista de Profissionais</h2><input type="text" class="search-box" placeholder="Buscar..."></div>
+                    <table class="data-table"><thead><tr><th>Nome</th><th>Especialidade</th><th>CRM</th><th>Status</th><th>Ações</th></tr></thead>
+                        <tbody id="profissionais-tbody"><tr><td colspan="5"><div class="empty-state"><p class="empty-text">Nenhum profissional cadastrado</p></div></td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Demais abas do mock podem ser preenchidas depois, mantendo o layout -->
+        </div>
     </div>
 
-    <!-- Modais serão adicionados aqui -->
-    <div id="modalContainer"></div>
+    <div class="toast" id="toast"><span class="toast-message" id="toastMessage">Operação realizada com sucesso!</span></div>
 
     <script src="assets/js/config.js"></script>
-    <script src="assets/js/panel.js"></script>
+    <script src="assets/js/panel_modern.js"></script>
 </body>
 </html>
