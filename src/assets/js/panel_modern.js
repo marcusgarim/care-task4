@@ -1,13 +1,26 @@
-// Smart Schedule - Painel Administrativo (JS do mock extraído)
+// Smart Schedule - Painel Administrativo (JS do mock com roteamento por hash)
 
 function showTab(tabName) {
   document.querySelectorAll('.tab-section').forEach(function(tab){ tab.classList.remove('active'); });
-  document.querySelectorAll('.tab').forEach(function(tab){ tab.classList.remove('active'); });
   var selected = document.getElementById(tabName + '-tab');
   if (selected) selected.classList.add('active');
-  if (event && event.currentTarget) event.currentTarget.classList.add('active');
-  var mc = document.querySelector('.main-container');
-  if (mc) mc.scrollTop = 0;
+  // Atualiza seleção no menu lateral
+  document.querySelectorAll('.nav-item').forEach(function(item){ item.classList.remove('active'); });
+  var activeLink = document.querySelector('.nav-item[href="#' + tabName + '"]');
+  if (activeLink) activeLink.classList.add('active');
+  var ca = document.querySelector('.content-area');
+  if (ca) ca.scrollTop = 0;
+}
+
+function applyRoute() {
+  var hash = (location.hash || '#dashboard');
+  var tab = hash.replace('#','');
+  showTab(tab);
+}
+
+function toggleSidebar() {
+  var sb = document.getElementById('sidebar');
+  if (sb) sb.classList.toggle('hidden');
 }
 
 function addProfissional() {
@@ -43,6 +56,24 @@ function showToast(message, type) {
 function goToChat() { window.location.href = '/index.html'; }
 function logout() { if (confirm('Deseja realmente sair?')) { window.location.href = '/login.html'; } }
 
-document.addEventListener('DOMContentLoaded', function(){ setTimeout(function(){ showToast('Sistema carregado com sucesso!', 'success'); }, 500); });
+document.addEventListener('DOMContentLoaded', function(){
+  // Bind navegação do menu para atualizar o hash
+  document.querySelectorAll('.nav-item').forEach(function(link){
+    link.addEventListener('click', function(e){
+      var href = link.getAttribute('href');
+      if (href && href.startsWith('#')) {
+        e.preventDefault();
+        if (location.hash !== href) {
+          location.hash = href;
+        } else {
+          applyRoute();
+        }
+      }
+    });
+  });
+  window.addEventListener('hashchange', applyRoute);
+  applyRoute();
+  setTimeout(function(){ showToast('Sistema carregado com sucesso!', 'success'); }, 500);
+});
 
 

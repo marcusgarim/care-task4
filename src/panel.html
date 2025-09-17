@@ -8,9 +8,9 @@
     <link rel="stylesheet" href="assets/css/panel_modern.css">
 </head>
 <body>
-    <!-- Header -->
+        <!-- Header -->
     <header class="header">
-        <div class="header-content">
+            <div class="header-content">
             <div class="logo">
                 <div class="logo-icon">S</div>
                 <span class="logo-text">Smart Schedule Admin</span>
@@ -20,268 +20,810 @@
                 <button class="header-btn" onclick="goToChat()">Ir para Chat</button>
                 <button class="header-btn primary" onclick="logout()">Sair</button>
             </div>
-        </div>
+                    </div>
     </header>
 
-    <!-- Tabs Navigation -->
-    <div class="tabs-container">
-        <div class="tabs">
-            <div class="tab active" onclick="showTab('dashboard')">Dashboard</div>
-            <div class="tab" onclick="showTab('profissionais')">Profissionais</div>
-            <div class="tab" onclick="showTab('servicos')">Serviços</div>
-            <div class="tab" onclick="showTab('convenios')">Convênios</div>
-            <div class="tab" onclick="showTab('horarios')">Horários</div>
-            <div class="tab" onclick="showTab('agenda')">Agenda</div>
-            <div class="tab" onclick="showTab('excecoes')">Exceções</div>
-            <div class="tab" onclick="showTab('faq')">FAQ</div>
-            <div class="tab" onclick="showTab('pagamentos')">Pagamentos</div>
-            <div class="tab" onclick="showTab('parceiros')">Parceiros</div>
-            <div class="tab" onclick="showTab('configuracoes')">Configurações</div>
-        </div>
-    </div>
-
-    <!-- Conteúdo -->
+    <!-- Main Container with Sidebar -->
     <div class="main-container">
-        <div class="content-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <nav>
+                <div class="nav-section">
+                    <div class="nav-section-title">Principal</div>
+                    <a class="nav-item active" href="#dashboard">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"/>
+                            <rect x="14" y="3" width="7" height="7"/>
+                            <rect x="14" y="14" width="7" height="7"/>
+                            <rect x="3" y="14" width="7" height="7"/>
+                        </svg>
+                        <span>Dashboard</span>
+                    </a>
+                    <a class="nav-item" href="#agenda">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        <span>Agenda</span>
+                    </a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Gestão</div>
+                    <a class="nav-item" href="#profissionais">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                        <span>Profissionais</span>
+                    </a>
+                    <a class="nav-item" href="#servicos">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                            <path d="M2 17l10 5 10-5"/>
+                            <path d="M2 12l10 5 10-5"/>
+                        </svg>
+                        <span>Serviços</span>
+                    </a>
+                    <a class="nav-item" href="#convenios">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="7" width="20" height="14" rx="2"/>
+                            <path d="M16 3l-4 4-4-4"/>
+                        </svg>
+                        <span>Convênios</span>
+                    </a>
+                    <a class="nav-item" href="#horarios">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span>Horários</span>
+                    </a>
+                    <a class="nav-item" href="#excecoes">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        <span>Exceções</span>
+                    </a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Configurações</div>
+                    <a class="nav-item" href="#faq">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        <span>FAQ</span>
+                    </a>
+                    <a class="nav-item" href="#pagamentos">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="1" y="4" width="22" height="16" rx="2"/>
+                            <line x1="1" y1="10" x2="23" y2="10"/>
+                        </svg>
+                        <span>Pagamentos</span>
+                    </a>
+                    <a class="nav-item" href="#parceiros">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="8.5" cy="7" r="4"/>
+                            <line x1="20" y1="8" x2="20" y2="14"/>
+                            <line x1="23" y1="11" x2="17" y2="11"/>
+                        </svg>
+                        <span>Parceiros</span>
+                    </a>
+                    <a class="nav-item" href="#configuracoes">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M12 1v6m0 6v6m4.22-13.22l4.24 4.24M1.54 1.54l4.24 4.24M21 12h-6m-6 0H3"/>
+                        </svg>
+                        <span>Configurações</span>
+                    </a>
+                    </div>
+            </nav>
+        </aside>
+        <main class="content-area">
+            <div class="content-wrapper">
             <!-- Dashboard (exemplo) -->
             <div class="tab-section active" id="dashboard-tab">
                 <div class="page-header">
                     <h1 class="page-title">Dashboard</h1>
                     <p class="page-subtitle">Visão geral do sistema</p>
-                </div>
+                    </div>
                 <div class="stats-grid">
                     <div class="stat-card"><div class="stat-label">Agendamentos Hoje</div><div class="stat-value">24</div><div class="stat-change">+12% vs ontem</div></div>
                     <div class="stat-card"><div class="stat-label">Novos Pacientes</div><div class="stat-value">8</div><div class="stat-change">+5% esta semana</div></div>
                     <div class="stat-card"><div class="stat-label">Taxa de Ocupação</div><div class="stat-value">87%</div><div class="stat-change negative">-3% vs média</div></div>
                     <div class="stat-card"><div class="stat-label">Mensagens do Chat</div><div class="stat-value">142</div><div class="stat-change">+28% hoje</div></div>
-                </div>
+                    </div>
                 <div class="table-container">
                     <div class="table-header"><h2 class="table-title">Próximos Agendamentos</h2></div>
                     <table class="data-table"><thead><tr><th>Horário</th><th>Paciente</th><th>Profissional</th><th>Serviço</th><th>Status</th></tr></thead><tbody>
                         <tr><td>14:30</td><td>Maria Silva</td><td>Dr. Carlos Mendes</td><td>Consulta</td><td><span class="status-badge active">Confirmado</span></td></tr>
                         <tr><td>15:00</td><td>João Santos</td><td>Dra. Ana Costa</td><td>Retorno</td><td><span class="status-badge pending">Pendente</span></td></tr>
                     </tbody></table>
-                </div>
-            </div>
-
-            <!-- Profissionais -->
-            <div id="profissionais" class="tab-panel">
-                <div class="section-header">
-                    <h2>Profissionais</h2>
-                    <button class="btn-primary" onclick="showProfissionalModal()">Adicionar Profissional</button>
-                </div>
-                
-                <div class="table-container">
-                    <table id="profissionaisTable" class="data-table">
+                    </div>
+                    </div>
+                    
+            <!-- Agenda -->
+            <div class="tab-section" id="agenda-tab">
+                <div class="page-header">
+                    <h1 class="page-title">Agenda</h1>
+                    <p class="page-subtitle">Visualizar e gerenciar agendamentos</p>
+                    </div>
+                    
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <h2 class="table-title">Dezembro 2024</h2>
+                        <div class="calendar-nav">
+                            <button class="btn btn-sm">Anterior</button>
+                            <button class="btn btn-sm">Hoje</button>
+                            <button class="btn btn-sm">Próximo</button>
+                    </div>
+                    </div>
+                    <div class="calendar-placeholder">
+                        <p>Calendário visual será implementado aqui</p>
+                        <p class="hint">Integração com biblioteca de calendário recomendada</p>
+                    </div>
+                    </div>
+                    
+                <div class="table-container mt-24">
+                    <div class="table-header">
+                        <h2 class="table-title">Agendamentos do Dia</h2>
+                        <button class="btn btn-primary btn-sm">Novo Agendamento</button>
+                    </div>
+                    <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Nome</th>
-                                <th>Especialidade</th>
-                                <th>CRM</th>
+                                <th>Horário</th>
+                                <th>Paciente</th>
+                                <th>Profissional</th>
+                                <th>Serviço</th>
+                                <th>Status</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="profissionaisTableBody">
-                            <!-- Dados carregados via JavaScript -->
+                        <tbody>
+                            <tr>
+                                <td colspan="6">
+                                    <div class="empty-state">
+                                        <p class="empty-text">Nenhum agendamento para hoje</p>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
+            
+
             <!-- Serviços -->
-            <div id="servicos" class="tab-panel">
-                <div class="section-header">
-                    <h2>Serviços da Clínica</h2>
-                    <button class="btn-primary" onclick="showServicoModal()">Adicionar Serviço</button>
+            <div class="tab-section" id="servicos-tab">
+                <div class="page-header">
+                    <h1 class="page-title">Serviços</h1>
+                    <p class="page-subtitle">Gerenciar procedimentos e exames</p>
+                </div>
+
+                <div class="form-section">
+                    <h2 class="table-title">Adicionar Serviço</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Nome do Serviço</label>
+                            <input type="text" class="form-input" id="srv_nome" placeholder="Consulta Cardiológica">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Categoria</label>
+                            <select class="form-select" id="srv_categoria">
+                                <option>Consulta</option>
+                                <option>Exame</option>
+                                <option>Procedimento</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Duração (minutos)</label>
+                            <input type="number" class="form-input" id="srv_duracao" placeholder="30">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Valor (R$)</label>
+                            <input type="text" class="form-input" id="srv_valor" placeholder="150,00">
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label class="form-label">Descrição</label>
+                            <textarea class="form-textarea" id="srv_descricao" placeholder="Descreva o serviço..."></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-20"><button class="btn btn-primary btn-sm">Adicionar Serviço</button></div>
                 </div>
                 
                 <div class="table-container">
-                    <table id="servicosTable" class="data-table">
+                    <div class="table-header">
+                        <h2 class="table-title">Lista de Serviços</h2>
+                        <input type="text" class="search-box" placeholder="Buscar serviço...">
+                    </div>
+                    <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Nome</th>
-                                <th>Descrição</th>
-                                <th>Valor</th>
                                 <th>Categoria</th>
+                                <th>Duração</th>
+                                <th>Valor</th>
+                                <th>Status</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="servicosTableBody">
-                            <!-- Dados carregados via JavaScript -->
+                        <tbody>
+                            <tr>
+                                <td colspan="6">
+                                    <div class="empty-state">
+                                        <p class="empty-text">Nenhum serviço cadastrado</p>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
             <!-- Convênios -->
-            <div id="convenios" class="tab-panel">
-                <div class="section-header">
-                    <h2>Convênios Aceitos</h2>
-                    <button class="btn-primary" onclick="showConvenioModal()">Adicionar Convênio</button>
+            <div class="tab-section" id="convenios-tab">
+                <div class="page-header">
+                    <h1 class="page-title">Convênios</h1>
+                    <p class="page-subtitle">Gerenciar planos de saúde aceitos</p>
+                </div>
+
+                <div class="form-section">
+                    <h2 class="table-title">Adicionar Convênio</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Nome do Convênio</label>
+                            <input type="text" class="form-input" id="conv_nome" placeholder="Unimed">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Registro ANS</label>
+                            <input type="text" class="form-input" id="conv_ans" placeholder="123456">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Telefone</label>
+                            <input type="tel" class="form-input" id="conv_telefone" placeholder="(11) 3333-3333">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">E-mail</label>
+                            <input type="email" class="form-input" id="conv_email" placeholder="contato@convenio.com">
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label class="form-label">Observações</label>
+                            <textarea class="form-textarea" id="conv_obs" placeholder="Informações adicionais..."></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-20"><button class="btn btn-primary btn-sm">Adicionar Convênio</button></div>
                 </div>
                 
                 <div class="table-container">
-                    <table id="conveniosTable" class="data-table">
+                    <div class="table-header">
+                        <h2 class="table-title">Lista de Convênios</h2>
+                        <input type="text" class="search-box" placeholder="Buscar convênio...">
+                    </div>
+                    <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Nome</th>
-                                <th>Registro ANS</th>
-                                <th>Observações</th>
+                                <th>ANS</th>
+                                <th>Telefone</th>
+                                <th>Status</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="conveniosTableBody">
-                            <!-- Dados carregados via JavaScript -->
+                        <tbody>
+                            <tr>
+                                <td colspan="5">
+                                    <div class="empty-state">
+                                        <p class="empty-text">Nenhum convênio cadastrado</p>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
             <!-- Horários -->
-            <div id="horarios" class="tab-panel">
-                <div class="section-header">
-                    <h2>Horários de Atendimento</h2>
-    
+            <div class="tab-section" id="horarios-tab">
+                <div class="page-header">
+                    <h1 class="page-title">Horários</h1>
+                    <p class="page-subtitle">Configurar horários de atendimento</p>
+                </div>
+
+                <div class="form-section">
+                    <h2 class="table-title">Configurar Horários</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Profissional</label>
+                            <select class="form-select" id="hor_profissional">
+                                <option>Selecione um profissional</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Dia da Semana</label>
+                            <select class="form-select" id="hor_dia">
+                                <option>Segunda-feira</option>
+                                <option>Terça-feira</option>
+                                <option>Quarta-feira</option>
+                                <option>Quinta-feira</option>
+                                <option>Sexta-feira</option>
+                                <option>Sábado</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Horário Início</label>
+                            <input type="time" class="form-input" id="hor_inicio" placeholder="--:--">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Horário Fim</label>
+                            <input type="time" class="form-input" id="hor_fim" placeholder="--:--">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Intervalo (minutos)</label>
+                            <input type="number" class="form-input" id="hor_intervalo" placeholder="30">
+                        </div>
+                    </div>
+                    <div class="mt-20"><button class="btn btn-primary btn-sm">Salvar Horário</button></div>
                 </div>
                 
                 <div class="table-container">
-                    <table id="horariosTable" class="data-table">
+                    <div class="table-header">
+                        <h2 class="table-title">Horários Configurados</h2>
+                    </div>
+                    <table class="data-table">
                         <thead>
                             <tr>
+                                <th>Profissional</th>
                                 <th>Dia</th>
-                                <th>Manhã</th>
-                                <th>Tarde</th>
-                                <th>Tempo da consulta</th>
+                                <th>Início</th>
+                                <th>Fim</th>
+                                <th>Intervalo</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="horariosTableBody">
-                            <!-- Dados carregados via JavaScript -->
+                        <tbody>
+                            <tr>
+                                <td colspan="6">
+                                    <div class="empty-state">
+                                        <p class="empty-text">Nenhum horário configurado</p>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Agenda -->
-            <div id="agenda" class="tab-panel">
-                <div class="section-header">
-                    <h2>Exceções na Agenda</h2>
-                    <button class="btn-primary" onclick="showExcecaoModal()">Adicionar Exceção</button>
+            
+            <!-- Exceções -->
+            <div class="tab-section" id="excecoes-tab">
+                <div class="page-header">
+                    <h1 class="page-title">Exceções de Agenda</h1>
+                    <p class="page-subtitle">Feriados, folgas e bloqueios</p>
+                </div>
+
+                <div class="form-section">
+                    <h2 class="table-title">Adicionar Exceção</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Tipo</label>
+                            <select class="form-select" id="exc_tipo">
+                                <option>Feriado</option>
+                                <option>Folga</option>
+                                <option>Bloqueio</option>
+                                <option>Evento</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Data</label>
+                            <input type="date" class="form-input" id="exc_data" placeholder="dd/mm/aaaa">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Profissional</label>
+                            <select class="form-select" id="exc_profissional">
+                                <option>Todos</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Período</label>
+                            <select class="form-select" id="exc_periodo">
+                                <option>Dia todo</option>
+                                <option>Manhã</option>
+                                <option>Tarde</option>
+                                <option>Personalizado</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label class="form-label">Descrição</label>
+                            <input type="text" class="form-input" id="exc_descricao" placeholder="Motivo da exceção">
+                        </div>
+                    </div>
+                    <div class="mt-20"><button class="btn btn-primary btn-sm">Adicionar Exceção</button></div>
                 </div>
                 
                 <div class="table-container">
-                    <table id="excecoesTable" class="data-table">
+                    <div class="table-header">
+                        <h2 class="table-title">Exceções Cadastradas</h2>
+                    </div>
+                    <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Data</th>
                                 <th>Tipo</th>
+                                <th>Profissional</th>
+                                <th>Período</th>
                                 <th>Descrição</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="excecoesTableBody">
-                            <!-- Dados carregados via JavaScript -->
+                        <tbody>
+                            <tr>
+                                <td colspan="6">
+                                    <div class="empty-state">
+                                        <p class="empty-text">Nenhuma exceção cadastrada</p>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
             <!-- FAQ -->
-            <div id="faq" class="tab-panel">
-                <div class="section-header">
-                    <h2>Perguntas Frequentes</h2>
-                    <button class="btn-primary" onclick="showFaqModal()">Adicionar FAQ</button>
+            <div class="tab-section" id="faq-tab">
+                <div class="page-header">
+                    <h1 class="page-title">FAQ</h1>
+                    <p class="page-subtitle">Perguntas frequentes do chatbot</p>
+                </div>
+
+                <div class="form-section">
+                    <h2 class="table-title">Adicionar Pergunta</h2>
+                    <div class="form-group">
+                        <label class="form-label">Pergunta</label>
+                        <input type="text" class="form-input" id="faq_pergunta" placeholder="Como agendar uma consulta?">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Resposta</label>
+                        <textarea class="form-textarea" id="faq_resposta" placeholder="Para agendar uma consulta..."></textarea>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Categoria</label>
+                            <select class="form-select" id="faq_categoria">
+                                <option>Agendamento</option>
+                                <option>Pagamento</option>
+                                <option>Exames</option>
+                                <option>Convênios</option>
+                                <option>Geral</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Palavras-chave</label>
+                            <input type="text" class="form-input" id="faq_keywords" placeholder="agendar, marcar, consulta">
+                        </div>
+                    </div>
+                    <div class="mt-20"><button class="btn btn-primary btn-sm">Adicionar FAQ</button></div>
                 </div>
                 
                 <div class="table-container">
-                    <table id="faqTable" class="data-table">
+                    <div class="table-header">
+                        <h2 class="table-title">Perguntas Cadastradas</h2>
+                        <input type="text" class="search-box" placeholder="Buscar pergunta...">
+                    </div>
+                    <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Pergunta</th>
                                 <th>Categoria</th>
-                                <th>Palavras-chave</th>
+                                <th>Palavras‑chave</th>
+                                <th>Status</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="faqTableBody">
-                            <!-- Dados carregados via JavaScript -->
+                        <tbody>
+                            <tr>
+                                <td colspan="5">
+                                    <div class="empty-state">
+                                        <p class="empty-text">Nenhuma pergunta cadastrada</p>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
             <!-- Pagamentos -->
-            <div id="pagamentos" class="tab-panel">
-                <div class="section-header">
-                    <h2>Formas de Pagamento</h2>
-                    <button class="btn-primary" onclick="showPagamentoModal()">Adicionar Forma</button>
+            <div class="tab-section" id="pagamentos-tab">
+                <div class="page-header">
+                    <h1 class="page-title">Formas de Pagamento</h1>
+                    <p class="page-subtitle">Configurar opções de pagamento</p>
+                </div>
+
+                <div class="form-section">
+                    <h2 class="table-title">Adicionar Forma de Pagamento</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Nome</label>
+                            <input type="text" class="form-input" id="pay_nome" placeholder="Cartão de Crédito">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tipo</label>
+                            <select class="form-select" id="pay_tipo">
+                                <option>Cartão de Crédito</option>
+                                <option>Cartão de Débito</option>
+                                <option>Dinheiro</option>
+                                <option>PIX</option>
+                                <option>Boleto</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Taxa (%)</label>
+                            <input type="number" step="0.1" class="form-input" id="pay_taxa" placeholder="2.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Parcelas Máximas</label>
+                            <input type="number" class="form-input" id="pay_parcelas" placeholder="12">
+                        </div>
+                    </div>
+                    <div class="mt-20"><button class="btn btn-primary btn-sm">Adicionar Pagamento</button></div>
                 </div>
                 
                 <div class="table-container">
-                    <table id="pagamentosTable" class="data-table">
+                    <div class="table-header">
+                        <h2 class="table-title">Formas de Pagamento Ativas</h2>
+                    </div>
+                    <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Nome</th>
-                                <th>Descrição</th>
+                                <th>Tipo</th>
+                                <th>Taxa</th>
                                 <th>Parcelas</th>
+                                <th>Status</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="pagamentosTableBody">
-                            <!-- Dados carregados via JavaScript -->
+                        <tbody>
+                            <tr>
+                                <td colspan="6">
+                                    <div class="empty-state">
+                                        <p class="empty-text">Nenhuma forma de pagamento cadastrada</p>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
             <!-- Parceiros -->
-            <div id="parceiros" class="tab-panel">
-                <div class="section-header">
-                    <h2>Parceiros</h2>
-                    <button class="btn-primary" onclick="showParceiroModal()">Adicionar Parceiro</button>
+            <div class="tab-section" id="parceiros-tab">
+                <div class="page-header">
+                    <h1 class="page-title">Parceiros</h1>
+                    <p class="page-subtitle">Laboratórios e clínicas parceiras</p>
+                </div>
+
+                <div class="form-section">
+                    <h2 class="table-title">Adicionar Parceiro</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Nome</label>
+                            <input type="text" class="form-input" id="par_nome" placeholder="Laboratório XYZ">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tipo</label>
+                            <select class="form-select" id="par_tipo">
+                                <option>Laboratório</option>
+                                <option>Clínica</option>
+                                <option>Hospital</option>
+                                <option>Farmácia</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CNPJ</label>
+                            <input type="text" class="form-input" id="par_cnpj" placeholder="00.000.000/0000-00">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Telefone</label>
+                            <input type="tel" class="form-input" id="par_telefone" placeholder="(11) 3333-3333">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">E-mail</label>
+                            <input type="email" class="form-input" id="par_email" placeholder="contato@parceiro.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Responsável</label>
+                            <input type="text" class="form-input" id="par_responsavel" placeholder="Nome do responsável">
+                        </div>
+                    </div>
+                    <div class="mt-20"><button class="btn btn-primary btn-sm">Adicionar Parceiro</button></div>
                 </div>
                 
                 <div class="table-container">
-                    <table id="parceirosTable" class="data-table">
+                    <div class="table-header">
+                        <h2 class="table-title">Lista de Parceiros</h2>
+                    </div>
+                    <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Tipo</th>
                                 <th>Nome</th>
-                                <th>Endereço</th>
+                                <th>Tipo</th>
                                 <th>Telefone</th>
+                                <th>Responsável</th>
+                                <th>Status</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="parceirosTableBody">
-                            <!-- Dados carregados via JavaScript -->
+                        <tbody>
+                            <tr>
+                                <td colspan="6">
+                                    <div class="empty-state">
+                                        <p class="empty-text">Nenhum parceiro cadastrado</p>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
+
+            <!-- Configurações -->
+            <div class="tab-section" id="configuracoes-tab">
+                <div class="page-header">
+                    <h1 class="page-title">Configurações</h1>
+                    <p class="page-subtitle">Parâmetros gerais do sistema</p>
+                </div>
+
+                <div class="form-section">
+                    <h2 class="table-title">Dados da Clínica</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Nome da Clínica</label>
+                            <input type="text" class="form-input" id="cfg_nome_clinica" placeholder="Smart Schedule Clinic">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CNPJ</label>
+                            <input type="text" class="form-input" id="cfg_cnpj" placeholder="00.000.000/0000-00">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Telefone Principal</label>
+                            <input type="tel" class="form-input" id="cfg_telefone" placeholder="(11) 3333-3333">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">WhatsApp</label>
+                            <input type="tel" class="form-input" id="cfg_whatsapp" placeholder="(11) 99999-9999">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">E-mail</label>
+                            <input type="email" class="form-input" id="cfg_email" placeholder="contato@smartschedule.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Website</label>
+                            <input type="url" class="form-input" id="cfg_website" placeholder="www.smartschedule.com">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2 class="table-title">Endereço</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">CEP</label>
+                            <input type="text" class="form-input" id="cfg_cep" placeholder="01234-567">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Rua</label>
+                            <input type="text" class="form-input" id="cfg_rua" placeholder="Rua Exemplo">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Número</label>
+                            <input type="text" class="form-input" id="cfg_numero" placeholder="123">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Complemento</label>
+                            <input type="text" class="form-input" id="cfg_complemento" placeholder="Sala 45">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Bairro</label>
+                            <input type="text" class="form-input" id="cfg_bairro" placeholder="Centro">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Cidade</label>
+                            <input type="text" class="form-input" id="cfg_cidade" placeholder="São Paulo">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2 class="table-title">Configurações do Chat</h2>
+                    <div class="form-grid">
+                        <div class="form-group" style="grid-column: 1 / span 2;">
+                            <label class="form-label">Mensagem de Boas-vindas</label>
+                            <textarea class="form-textarea" id="cfg_msg_boasvindas" placeholder="Olá! Bem-vindo à Smart Schedule. Como posso ajudar você hoje?"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Horário Início</label>
+                            <input type="time" class="form-input" id="cfg_atendimento_inicio" value="08:00">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Horário Fim</label>
+                            <input type="time" class="form-input" id="cfg_atendimento_fim" value="18:00">
+                        </div>
+                    </div>
+                    <div class="mt-20"><button class="btn btn-primary btn-sm">Salvar Configurações</button></div>
+                </div>
+    </div>
+
+            
             <!-- Profissionais -->
             <div class="tab-section" id="profissionais-tab">
-                <div class="page-header"><h1 class="page-title">Profissionais</h1><p class="page-subtitle">Gerenciar médicos e especialistas</p></div>
+                <div class="page-header">
+                    <h1 class="page-title">Profissionais</h1>
+                    <p class="page-subtitle">Gerenciar médicos e especialistas</p>
+                </div>
+
                 <div class="form-section">
                     <h2 class="table-title">Adicionar Profissional</h2>
                     <div class="form-grid">
-                        <div class="form-group"><label class="form-label">Nome Completo</label><input type="text" class="form-input" id="prof_nome" placeholder="Dr. João Silva"></div>
-                        <div class="form-group"><label class="form-label">Especialidade</label><input type="text" class="form-input" id="prof_especialidade" placeholder="Cardiologia"></div>
-                        <div class="form-group"><label class="form-label">CRM</label><input type="text" class="form-input" id="prof_crm" placeholder="12345-SP"></div>
-                        <div class="form-group"><label class="form-label">Telefone</label><input type="tel" class="form-input" id="prof_telefone" placeholder="(11) 98765-4321"></div>
+                        <div class="form-group">
+                            <label class="form-label">Nome Completo</label>
+                            <input type="text" class="form-input" id="prof_nome" placeholder="Dr. João Silva">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Especialidade</label>
+                            <input type="text" class="form-input" id="prof_especialidade" placeholder="Cardiologia">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CRM</label>
+                            <input type="text" class="form-input" id="prof_crm" placeholder="12345-SP">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Telefone</label>
+                            <input type="tel" class="form-input" id="prof_telefone" placeholder="(11) 98765-4321">
+                        </div>
                     </div>
-                    <div style="margin-top: 20px;"><button class="btn btn-primary" onclick="addProfissional()">Adicionar Profissional</button></div>
+                    <div class="mt-20"><button class="btn btn-primary btn-sm" onclick="addProfissional()">Adicionar Profissional</button></div>
                 </div>
+
                 <div class="table-container">
-                    <div class="table-header"><h2 class="table-title">Lista de Profissionais</h2><input type="text" class="search-box" placeholder="Buscar..."></div>
-                    <table class="data-table"><thead><tr><th>Nome</th><th>Especialidade</th><th>CRM</th><th>Status</th><th>Ações</th></tr></thead>
-                        <tbody id="profissionais-tbody"><tr><td colspan="5"><div class="empty-state"><p class="empty-text">Nenhum profissional cadastrado</p></div></td></tr></tbody>
+                    <div class="table-header">
+                        <h2 class="table-title">Lista de Profissionais</h2>
+                        <input type="text" class="search-box" placeholder="Buscar...">
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Especialidade</th>
+                                <th>CRM</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="profissionais-tbody">
+                            <tr>
+                                <td colspan="5">
+                                    <div class="empty-state">
+                                        <p class="empty-text">Nenhum profissional cadastrado</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
 
             <!-- Demais abas do mock podem ser preenchidas depois, mantendo o layout -->
-        </div>
-    </div>
 
     <div class="toast" id="toast"><span class="toast-message" id="toastMessage">Operação realizada com sucesso!</span></div>
 

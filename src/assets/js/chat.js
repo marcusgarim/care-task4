@@ -7,6 +7,20 @@ let totalCost = 0;
 let messageIdCounter = 0;
 let exchangeRate = 5.00; // Taxa de câmbio padrão
 
+// Utilitário: auto ajusta a altura do textarea (fallback caso ainda não exista)
+function autoResize(el) {
+    try {
+        if (!el || !el.style) return;
+        el.style.height = 'auto';
+        const min = 72;   // altura mínima em px
+        const max = 240;  // altura máxima em px
+        const next = Math.max(min, Math.min(max, el.scrollHeight || min));
+        el.style.height = next + 'px';
+    } catch (e) {
+        // não interromper o fluxo do chat
+    }
+}
+
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     initializeChat();
