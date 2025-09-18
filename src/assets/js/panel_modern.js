@@ -6,6 +6,13 @@ function apiBase() {
 
 function authHeaders() {
   var headers = {};
+  try {
+    if (!window.CONFIG) window.CONFIG = {};
+    if (!window.CONFIG.AUTH_TOKEN) {
+      var t = localStorage.getItem('app_token');
+      if (t) window.CONFIG.AUTH_TOKEN = t;
+    }
+  } catch(e) {}
   if (window.CONFIG && window.CONFIG.AUTH_TOKEN) {
     headers['Authorization'] = 'Bearer ' + window.CONFIG.AUTH_TOKEN;
   }

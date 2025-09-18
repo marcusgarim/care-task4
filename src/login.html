@@ -34,6 +34,16 @@
         }
         .title h1 { font-size: 22px; color: #333; }
         .title p { font-size: 14px; color: #666; }
+        .tabs { display: flex; gap: 12px; width: 100%; }
+        .tab-btn { flex:1; padding: 10px 12px; border-radius: 10px; border: 1px solid #e0e0e0; background:#fff; font-weight:600; cursor:pointer; }
+        .tab-btn.active { background:#667eea; border-color:#667eea; color:#fff; }
+        .form { width:100%; display:none; gap:10px; }
+        .form.active{ display:flex; flex-direction:column; }
+        .input { width:100%; padding:12px; border:1px solid #e0e0e0; border-radius:10px; }
+        .submit { width:100%; padding:12px; border-radius:10px; border:0; background:#111827; color:#fff; font-weight:700; cursor:pointer; }
+        .submit[disabled]{ opacity:.6; cursor:not-allowed; }
+        .error { color:#b91c1c; font-size:12px; }
+        .success { color:#065f46; font-size:12px; }
         .google-btn {
             width: 100%;
             display: inline-flex;
@@ -78,6 +88,28 @@
             <p>Minha Clínica Inteligente</p>
         </div>
 
+        <div class="tabs">
+            <button id="tab-login" class="tab-btn active" type="button">Entrar</button>
+            <button id="tab-register" class="tab-btn" type="button">Criar Conta</button>
+        </div>
+
+        <form id="loginForm" class="form active" autocomplete="on">
+            <input class="input" id="loginEmail" type="email" placeholder="Email" required>
+            <input class="input" id="loginPassword" type="password" placeholder="Senha (min 6)" minlength="6" required>
+            <button class="submit" id="loginBtn" type="submit">Entrar</button>
+            <div id="loginMsg" class="error" aria-live="polite"></div>
+        </form>
+
+        <form id="registerForm" class="form" autocomplete="on">
+            <input class="input" id="regName" type="text" placeholder="Nome completo" required>
+            <input class="input" id="regEmail" type="email" placeholder="Email" required>
+            <input class="input" id="regPassword" type="password" placeholder="Senha (min 6)" minlength="6" required>
+            <button class="submit" id="registerBtn" type="submit">Criar Conta</button>
+            <div id="registerMsg" class="error" aria-live="polite"></div>
+        </form>
+
+        <div class="divider">ou</div>
+
         <button id="googleSignInBtn" class="google-btn" type="button">
             <svg class="google-icon" viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <path d="M533.5 278.4c0-18.5-1.5-37-4.7-54.9H272.1v103.9h146.9c-6.1 33.6-25.1 62-53.5 81v67h86.5c50.7-46.7 81.5-115.5 81.5-197z" fill="#4285F4"/>
@@ -88,14 +120,78 @@
             Entrar com Google
         </button>
 
-        <div class="divider">ou</div>
-        <a class="alt-link" href="#" id="emailLink">Entrar com email</a>
+        <a class="alt-link" href="/">Voltar ao chat</a>
     </main>
 
     <script>
-        document.getElementById('emailLink').addEventListener('click', function(e) {
+        function setLoading(btn, loading) {
+            if (loading) { btn.setAttribute('disabled', 'disabled'); btn.textContent = 'Aguarde...'; }
+            else { btn.removeAttribute('disabled'); btn.textContent = btn.id === 'loginBtn' ? 'Entrar' : 'Criar Conta'; }
+        }
+
+        function saveToken(token) {
+            try { localStorage.setItem('app_token', token); } catch(e) {}
+            try { if (window.CONFIG) window.CONFIG.AUTH_TOKEN = token; } catch(e) {}
+        }
+
+        // Tabs
+        var tabLogin = document.getElementById('tab-login');
+        var tabRegister = document.getElementById('tab-register');
+        var loginForm = document.getElementById('loginForm');
+        var registerForm = document.getElementById('registerForm');
+        tabLogin.addEventListener('click', function(){
+            tabLogin.classList.add('active'); tabRegister.classList.remove('active');
+            loginForm.classList.add('active'); registerForm.classList.remove('active');
+        });
+        tabRegister.addEventListener('click', function(){
+            tabRegister.classList.add('active'); tabLogin.classList.remove('active');
+            registerForm.classList.add('active'); loginForm.classList.remove('active');
+        });
+
+        // Prefill token se existir
+        try { var existing = localStorage.getItem('app_token'); if (existing) { if (window.CONFIG) window.CONFIG.AUTH_TOKEN = existing; } } catch(e) {}
+
+        // Submit Login
+        loginForm.addEventListener('submit', async function(e){
             e.preventDefault();
-            window.location.href = 'index.html';
+            var email = document.getElementById('loginEmail').value.trim();
+            var password = document.getElementById('loginPassword').value;
+            var msg = document.getElementById('loginMsg'); msg.textContent = '';
+            if (!email || !password || password.length < 6) { msg.textContent = 'Preencha um email válido e senha (min 6).'; return; }
+            setLoading(document.getElementById('loginBtn'), true);
+            try {
+                var res = await fetch((window.CONFIG.API_BASE || '') + '/auth/login', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email, password: password })
+                });
+                var data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Falha no login');
+                saveToken(data.token);
+                window.location.href = '/panel.html#dashboard';
+            } catch(err) {
+                msg.textContent = err.message || 'Erro ao autenticar';
+            } finally { setLoading(document.getElementById('loginBtn'), false); }
+        });
+
+        // Submit Register
+        registerForm.addEventListener('submit', async function(e){
+            e.preventDefault();
+            var name = document.getElementById('regName').value.trim();
+            var email = document.getElementById('regEmail').value.trim();
+            var password = document.getElementById('regPassword').value;
+            var msg = document.getElementById('registerMsg'); msg.textContent='';
+            if (!name || !email || !password || password.length < 6) { msg.textContent = 'Preencha nome, email e senha (min 6).'; return; }
+            setLoading(document.getElementById('registerBtn'), true);
+            try {
+                var res = await fetch((window.CONFIG.API_BASE || '') + '/auth/register', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ full_name: name, email: email, password: password })
+                });
+                var data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Falha no cadastro');
+                saveToken(data.token);
+                window.location.href = '/panel.html#dashboard';
+            } catch(err) {
+                msg.textContent = err.message || 'Erro ao cadastrar';
+            } finally { setLoading(document.getElementById('registerBtn'), false); }
         });
         document.getElementById('googleSignInBtn').addEventListener('click', function() {
             if (!window.CONFIG || !window.CONFIG.API_BASE) {

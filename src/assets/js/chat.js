@@ -8,6 +8,13 @@ let messageIdCounter = 0;
 let exchangeRate = 5.00; // Taxa de câmbio padrão
 let isSending = false; // Evita envios duplicados/concorrentes
 
+// Hidrata token do localStorage em window.CONFIG para uso nas requisições
+try {
+    if (!window.CONFIG) window.CONFIG = {};
+    var existingToken = localStorage.getItem('app_token');
+    if (existingToken) window.CONFIG.AUTH_TOKEN = existingToken;
+} catch (e) {}
+
 // Utilitário: auto ajusta a altura do textarea (fallback caso ainda não exista)
 function autoResize(el) {
     try {
