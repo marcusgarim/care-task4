@@ -1,5 +1,37 @@
 // Smart Schedule - Painel Administrativo (JS do mock com roteamento por hash)
 
+function apiBase() {
+  return (window.CONFIG && window.CONFIG.API_BASE) ? window.CONFIG.API_BASE : 'http://127.0.0.1:8000/api';
+}
+
+function authHeaders() {
+  var headers = {};
+  if (window.CONFIG && window.CONFIG.AUTH_TOKEN) {
+    headers['Authorization'] = 'Bearer ' + window.CONFIG.AUTH_TOKEN;
+  }
+  return headers;
+}
+
+async function ensureAuthenticated() {
+  try {
+    var res = await fetch(apiBase() + '/auth/me', {
+      method: 'GET',
+      credentials: 'include',
+      headers: authHeaders()
+    });
+    if (!res.ok) throw new Error('unauthorized');
+    var data = await res.json();
+    var ui = document.querySelector('.user-info span');
+    if (ui && data && data.user && (data.user.name || data.user.email)) {
+      ui.textContent = data.user.name || data.user.email;
+    }
+    return true;
+  } catch (e) {
+    window.location.href = '/login.html';
+    return false;
+  }
+}
+
 function showTab(tabName) {
   document.querySelectorAll('.tab-section').forEach(function(tab){ tab.classList.remove('active'); });
   var selected = document.getElementById(tabName + '-tab');
@@ -54,9 +86,23 @@ function showToast(message, type) {
 }
 
 function goToChat() { window.location.href = '/index.html'; }
-function logout() { if (confirm('Deseja realmente sair?')) { window.location.href = '/login.html'; } }
+function logout() {
+  if (!confirm('Deseja realmente sair?')) return;
+  fetch(apiBase() + '/auth/logout', {
+    method: 'POST',
+    credentials: 'include',
+    headers: Object.assign({'Content-Type': 'application/json'}, authHeaders())
+  })
+  .catch(function(){})
+  .finally(function(){
+    try { if (window.CONFIG) window.CONFIG.AUTH_TOKEN = null; } catch(e){}
+    window.location.href = '/login.html';
+  });
+}
 
 document.addEventListener('DOMContentLoaded', function(){
+  ensureAuthenticated().then(function(authOk){
+    if (!authOk) return;
   // Bind navegação do menu para atualizar o hash
   document.querySelectorAll('.nav-item').forEach(function(link){
     link.addEventListener('click', function(e){
@@ -74,6 +120,7 @@ document.addEventListener('DOMContentLoaded', function(){
   window.addEventListener('hashchange', applyRoute);
   applyRoute();
   setTimeout(function(){ showToast('Sistema carregado com sucesso!', 'success'); }, 500);
+  });
 });
 
 

@@ -2,8 +2,18 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
+from dotenv import load_dotenv
+from pathlib import Path
 
 app = FastAPI()
+
+# Carrega variáveis de ambiente do .env automaticamente
+# 1) Primeiro tenta o .env do diretório atual
+# 2) Depois tenta explicitamente o .env na raiz do projeto (um nível acima de app/)
+load_dotenv()
+project_root_env = Path(__file__).resolve().parents[1] / ".env"
+if project_root_env.exists():
+    load_dotenv(project_root_env, override=False)
 
 # CORS via env: APP_CORS_ORIGINS=dominio1,dominio2 (ou * para liberar)
 cors_origins_env = os.getenv("APP_CORS_ORIGINS", "*")
@@ -14,6 +24,7 @@ app.add_middleware(
     allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Tratamento global de exceções para manter formato consistente

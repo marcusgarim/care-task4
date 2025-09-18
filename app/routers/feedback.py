@@ -68,7 +68,7 @@ async def chat(payload: ChatIn):
             try:
                 result = ai.generate_reply(user_message, payload.sessionId, payload.isFirst)
                 return JSONResponse(content={
-                    "success": Truzxe,
+                    "success": True,
                     "message": result["message"],
                     "tokens": result["tokens"],
                 })

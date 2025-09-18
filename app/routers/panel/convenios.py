@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from ...core.db import get_db, is_postgres_connection
+from ..auth import get_current_user
 
-router = APIRouter(prefix="/panel", tags=["panel-convenios"])
+router = APIRouter(prefix="/panel", tags=["panel-convenios"], dependencies=[Depends(get_current_user)])
 
 @router.get("/convenios")
 async def listar_convenios(db = Depends(get_db)):

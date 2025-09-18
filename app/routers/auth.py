@@ -20,6 +20,9 @@ FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://127.0.0.1:5500/src/in
 
 security = HTTPBearer(auto_error=True)
 
+# Versão tolerante (não obriga header) para permitir cookie OU header
+optional_security = HTTPBearer(auto_error=False)
+
 
 class GoogleAuthPayload(BaseModel):
     credential: Optional[str] = None  # id_token (JWT do Google)
@@ -40,6 +43,32 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) 
         if not email:
             raise HTTPException(status_code=401, detail="Token inválido")
         return email
+    except Exception:
+        raise HTTPException(status_code=401, detail="Token inválido")
+
+
+def get_current_user(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_security),
+) -> Dict:
+    """Obtém o usuário atual a partir do Authorization: Bearer ou cookie HttpOnly.
+
+    Retorna o payload do JWT se válido, ou lança HTTP 401 caso contrário.
+    """
+    token: Optional[str] = None
+    if credentials and credentials.scheme and credentials.scheme.lower() == "bearer":
+        token = credentials.credentials
+    if not token:
+        token = request.cookies.get("app_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Não autenticado")
+
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        email = payload.get("sub")
+        if not email:
+            raise HTTPException(status_code=401, detail="Token inválido")
+        return payload
     except Exception:
         raise HTTPException(status_code=401, detail="Token inválido")
 
@@ -210,4 +239,24 @@ async def google_callback(code: Optional[str] = None, error: Optional[str] = Non
     )
     return response
 
+
+@router.get("/me")
+async def me(user: Dict = Depends(get_current_user)):
+    return JSONResponse(content={
+        "success": True,
+        "user": {
+            "email": user.get("sub"),
+            "name": user.get("name"),
+            "picture": user.get("picture"),
+            "provider": user.get("provider"),
+        }
+    })
+
+
+@router.post("/logout")
+async def logout():
+    # Responde com JSON e apaga cookie HttpOnly
+    response = JSONResponse(content={"success": True, "message": "Logout efetuado"})
+    response.delete_cookie(key="app_token", path="/", samesite="lax")
+    return response
 

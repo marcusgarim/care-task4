@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from ...core.db import get_db
+from ..auth import get_current_user
 
-router = APIRouter(prefix="/panel", tags=["panel-configuracoes"])
+router = APIRouter(prefix="/panel", tags=["panel-configuracoes"], dependencies=[Depends(get_current_user)])
 
 @router.get("/configuracoes")
 async def listar_configuracoes(db = Depends(get_db)):

@@ -6,6 +6,7 @@ let totalTokens = 0;
 let totalCost = 0;
 let messageIdCounter = 0;
 let exchangeRate = 5.00; // Taxa de câmbio padrão
+let isSending = false; // Evita envios duplicados/concorrentes
 
 // Utilitário: auto ajusta a altura do textarea (fallback caso ainda não exista)
 function autoResize(el) {
@@ -71,10 +72,15 @@ function sendMessage() {
     const message = input.value.trim();
     
     if (!message) return;
+    if (isSending) return;
+    isSending = true;
+    let requestSucceeded = false; // Se true, não mostrar erro genérico no catch
     
     // Adiciona mensagem do usuário
     addMessage('user', message);
     input.value = '';
+    const sendBtn = document.getElementById('sendButton');
+    if (sendBtn) sendBtn.disabled = true;
     
     // Mostra indicador de digitação
     showTyping();
@@ -96,33 +102,41 @@ function sendMessage() {
             isFirst: isFirstMessage
         })
     })
-    .then(response => response.json())
-    .then(data => {
+    .then(async (response) => {
+        let raw = '';
+        try {
+            raw = await response.text();
+            const data = raw ? JSON.parse(raw) : {};
+            return { ok: response.ok, status: response.status, data };
+        } catch (e) {
+            return { ok: false, status: response.status, data: { success: false, message: 'Resposta inválida do servidor', raw } };
+        }
+    })
+    .then(({ ok, data, status }) => {
         hideTyping();
-        
-        if (data.success) {
-            // Adiciona resposta do bot
+        if (ok && data && data.success) {
+            requestSucceeded = true;
             const messageId = addMessage('bot', data.message);
-            
-            // Atualiza estatísticas
             if (data.tokens) {
                 updateStats(data.tokens);
             }
-            
-            // Log debug
             addDebugLog('Resposta recebida', data);
-            
-            // Marca que não é mais a primeira mensagem
             isFirstMessage = false;
         } else {
-            addMessage('bot', 'Desculpe, ocorreu um erro. Por favor, tente novamente.');
-            addDebugLog('Erro na resposta', data);
+            const fallbackMsg = (data && data.message) ? data.message : 'Desculpe, ocorreu um erro. Por favor, tente novamente.';
+            addMessage('bot', fallbackMsg);
+            addDebugLog('Erro na resposta', { status, data });
         }
     })
     .catch(error => {
         hideTyping();
-        addMessage('bot', 'Desculpe, não consegui processar sua mensagem. Tente novamente.');
-        addDebugLog('Erro de rede', error);
+        // Não exibir mensagem genérica no UI
+        addDebugLog('Erro de rede', String(error));
+    })
+    .finally(() => {
+        isSending = false;
+        const sendBtn2 = document.getElementById('sendButton');
+        if (sendBtn2) sendBtn2.disabled = false;
     });
 }
 
@@ -352,8 +366,10 @@ function updateStats(tokens) {
         
         totalCost += costInReais;
         
-        document.getElementById('totalTokens').textContent = totalTokens;
-        document.getElementById('totalCost').textContent = 'R$ ' + totalCost.toFixed(4).replace('.', ',');
+        const totalTokensEl = document.getElementById('totalTokens');
+        const totalCostEl = document.getElementById('totalCost');
+        if (totalTokensEl) totalTokensEl.textContent = totalTokens;
+        if (totalCostEl) totalCostEl.textContent = 'R$ ' + totalCost.toFixed(4).replace('.', ',');
     }
 }
 
@@ -499,7 +515,22 @@ localStorage.removeItem('sessionId');
 // Função para abrir o painel
 function openPanel() {
     addDebugLog('Botão Painel clicado', { timestamp: new Date().toISOString() });
-    window.location.href = 'panel.html';
+    const API_BASE = (window.CONFIG && window.CONFIG.API_BASE) ? window.CONFIG.API_BASE : 'http://127.0.0.1:8000/api';
+    fetch(`${API_BASE}/auth/me`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+            ...(window.CONFIG && window.CONFIG.AUTH_TOKEN ? { 'Authorization': `Bearer ${window.CONFIG.AUTH_TOKEN}` } : {})
+        }
+    })
+    .then(function(res){
+        if (res.ok) {
+            window.location.href = 'panel.html';
+        } else {
+            window.location.href = 'login.html';
+        }
+    })
+    .catch(function(){ window.location.href = 'login.html'; });
 }
 
 function bindModernLayout() {

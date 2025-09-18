@@ -8,16 +8,17 @@ O sistema é uma aplicação completa de assistente virtual para clínicas médi
 
 ### Estrutura de Diretórios
 
-```
+```text
 smart-schedule/
 ├── app/                        # Backend FastAPI
 │   ├── main.py                # Arquivo principal da aplicação
-│   ├── main_commented.py      # Versão comentada para fins didáticos
 │   ├── core/                  # Núcleo da aplicação
 │   │   └── db.py             # Gerenciamento de conexões (MySQL/PostgreSQL)
 │   ├── routers/              # Endpoints da API REST
 │   │   ├── exchange_rate.py  # API de taxa de câmbio
 │   │   ├── feedback.py       # Sistema de feedback e chat
+│   │   ├── messages.py       # Chat com contexto/sumarização (PostgreSQL)
+│   │   ├── auth.py           # Autenticação Google e emissão de JWT
 │   │   └── panel/            # Rotas do painel administrativo
 │   │       ├── configuracoes.py
 │   │       ├── convenios.py
@@ -35,6 +36,7 @@ smart-schedule/
 │       └── openai_service.py    # Integração com OpenAI/Azure
 ├── src/                     # Frontend estático
 │   ├── index.html           # Interface principal do chat
+│   ├── login.html           # Tela de login (Google OAuth)
 │   ├── panel.html           # Painel administrativo
 │   └── assets/              # Recursos estáticos
 │       ├── css/             # Estilos
@@ -78,7 +80,7 @@ allow_origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()] if
 - **JSON Response**: Mantém formato consistente de resposta
 
 ##### Registro de Routers
-- **API Principal**: `/api/chat`, `/api/feedback`, `/api/exchange-rate`
+- **API Principal**: `/api/chat`, `/api/messages`, `/api/feedback`, `/api/exchange-rate`
 - **Painel**: `/api/panel/*` para todas as funcionalidades administrativas
 - **Importação Segura**: Usa try/except para evitar falhas de inicialização
 
@@ -204,7 +206,7 @@ def format_real(self, value: float) -> str:
 
 ### 1. Requisição de Chat
 
-```
+```text
 Frontend (chat.js) 
     ↓ POST /api/chat
 FastAPI Router (feedback.py)
@@ -221,8 +223,8 @@ Frontend atualiza UI e estatísticas
 
 ### 2. Requisição do Painel Administrativo
 
-```
-Frontend (panel.js)
+```text
+Frontend (panel_modern.js)
     ↓ GET/POST/PUT/DELETE /api/panel/{recurso}
 FastAPI Router (panel/{recurso}.py)
     ↓ Depends(get_db)
@@ -236,7 +238,7 @@ Frontend atualiza tabelas/formulários
 
 ### 3. Fluxo de Feedback e Treinamento
 
-```
+```text
 Usuário clica thumbs up/down
     ↓ POST /api/feedback
 Busca conversa mais recente
@@ -254,7 +256,7 @@ Sistema de aprendizado colaborativo
 
 ### 4. Taxa de Câmbio
 
-```
+```text
 Frontend solicita taxa
     ↓ GET /api/exchange-rate
 CurrencyService.get_dollar_to_real_rate()
@@ -441,7 +443,7 @@ fetch(`${API_BASE}/panel/profissionais`, {
 ### 1. Dependências do Sistema
 
 #### Python Requirements (requirements.txt)
-```
+```text
 fastapi==0.111.0
 uvicorn[standard]==0.30.1
 pydantic==2.8.2
@@ -450,6 +452,7 @@ pymysql==1.1.0
 httpx==0.27.0
 openai==1.51.0
 psycopg[binary]==3.1.18
+PyJWT==2.8.0
 ```
 
 #### Instalação
@@ -494,6 +497,23 @@ OPENAI_MODEL=gpt-4o-mini
 
 # CORS (opcional)
 APP_CORS_ORIGINS=*
+
+# Autenticação JWT (opcional, usado por /api/auth/*)
+JWT_SECRET=altere-este-segredo
+JWT_ALGORITHM=HS256
+JWT_EXPIRE_MINUTES=60
+
+# Google OAuth (opcional, usado por /api/auth/google/*)
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=http://127.0.0.1:8000/api/auth/google/callback
+
+# Base do frontend para redireciono pós-login (auth callback)
+FRONTEND_BASE_URL=http://127.0.0.1:5500/src/index.html
+
+# Token de proteção simples para /api/messages (opcional)
+# Se definido, enviar Authorization: Bearer <APP_AUTH_TOKEN>
+APP_AUTH_TOKEN=
 ```
 
 ### 3. Configuração do Banco de Dados
@@ -523,10 +543,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 #### Frontend (Servidor Estático)
 ```bash
-# Copiar configuração
-cp src/assets/js/config.example.js src/assets/js/config.js
-
-# Editar config.js com URL do backend
+# Editar src/assets/js/config.js com a URL do backend
 # window.CONFIG = { API_BASE: 'http://127.0.0.1:8000/api' };
 
 # Servir arquivos estáticos
@@ -539,6 +556,9 @@ python3 -m http.server 5500 -d src
 
 ### Chat e Feedback
 - **POST `/api/chat`**: Endpoint principal do chat com IA
+- **POST `/api/messages`**: Chat com contexto (histórico, sumarização e snapshot do painel)
+  - Requer PostgreSQL para recursos avançados
+  - Se `APP_AUTH_TOKEN` estiver definido, enviar header `Authorization: Bearer <token>`
 - **POST `/api/feedback`**: Registrar feedback (positivo/negativo)
 - **POST `/api/rewrite`**: Salvar reescrita de resposta
 - **GET `/api/exchange-rate`**: Obter taxa de câmbio USD→BRL
@@ -553,6 +573,11 @@ python3 -m http.server 5500 -d src
 - **GET/POST/PUT/DELETE `/api/panel/pagamentos`**: Formas de pagamento
 - **GET/POST/PUT/DELETE `/api/panel/parceiros`**: Laboratórios parceiros
 - **GET/POST/PUT/DELETE `/api/panel/excecoes`**: Exceções de agenda
+
+### Autenticação
+- **POST `/api/auth/google`**: Recebe `credential` (id_token) ou `access_token` e retorna JWT
+- **GET `/api/auth/google/login`**: Inicia login Google (redirect)
+- **GET `/api/auth/google/callback`**: Callback do Google; seta cookie `app_token` e redireciona ao frontend
 
 ### Características das APIs
 - **Validação automática**: Schemas Pydantic garantem dados corretos
@@ -571,10 +596,12 @@ python3 -m http.server 5500 -d src
 - Logs detalhados de progresso
 
 #### Documentação Específica (doc/)
-- **DOCUMENTACAO_ATUAL_FASTAPI.md**: Guia completo da migração PHP→FastAPI
-- **CAMBIO_MOEDA.md**: Detalhes sobre sistema de conversão monetária
-- **LOGGING_SYSTEM.md**: Estratégias de logging e monitoramento
-- **SESSION_IMPLEMENTATION.md**: Gerenciamento de estado de usuário
+- **doc_fastAPI.md**: Guia da aplicação FastAPI
+- **doc_cambio.md**: Sistema de conversão monetária
+- **doc_logging.md**: Estratégias de logging e monitoramento
+- **doc_migração.md**: Migração e considerações
+- **doc_assistant_system.md**: Sistema do assistente
+- **doc_profissionais.md**: Estrutura de profissionais
 
 ### Arquivos de Configuração
 
@@ -613,7 +640,7 @@ window.CONFIG = {
 6. **Documentação abrangente** facilita manutenção
 
 ### Próximos Passos Recomendados
-1. **Implementação de autenticação** para o painel administrativo
+1. **Aplicar autenticação** no painel administrativo (integrar login Google ao fluxo)
 2. **Sistema de logs centralizados** (ELK Stack ou similar)
 3. **Testes automatizados** (pytest para backend, Jest para frontend)
 4. **CI/CD pipeline** para deploy automático

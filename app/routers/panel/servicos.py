@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from ...core.db import get_db, is_postgres_connection
+from ..auth import get_current_user
 
-router = APIRouter(prefix="/panel", tags=["panel-servicos"])
+router = APIRouter(prefix="/panel", tags=["panel-servicos"], dependencies=[Depends(get_current_user)])
 
 @router.get("/servicos")
 async def listar_servicos(request: Request, db = Depends(get_db)):

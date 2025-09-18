@@ -17,7 +17,7 @@ class OpenAIService:
             pass
 
         self.api_key = os.getenv("OPENAI_API_KEY")
-        self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        self.model = os.getenv("OPENAI_MODEL", "gpt-4o")
 
         # Azure OpenAI
         self.azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")

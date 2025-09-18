@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from ...core.db import get_db
+from ..auth import get_current_user
 
-router = APIRouter(prefix="/panel", tags=["panel-horarios"])
+router = APIRouter(prefix="/panel", tags=["panel-horarios"], dependencies=[Depends(get_current_user)])
 
 @router.get("/horarios")
 async def listar_horarios(db = Depends(get_db)):
