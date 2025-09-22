@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from dotenv import load_dotenv
 
 
@@ -20,7 +20,9 @@ class OpenAIService:
         self.model = os.getenv("OPENAI_MODEL", "gpt-4o")
 
         # Azure OpenAI
-        self.azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+        # Remover barra final do endpoint para evitar inconsistências
+        raw_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+        self.azure_endpoint = raw_endpoint[:-1] if raw_endpoint and raw_endpoint.endswith("/") else raw_endpoint
         self.azure_api_key = os.getenv("AZURE_OPENAI_API_KEY")
         self.azure_api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2025-05-01-preview")
         self.azure_deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")
@@ -39,28 +41,14 @@ class OpenAIService:
 
         # Azure OpenAI preferencial se configurado
         if self.azure_endpoint and self.azure_api_key and self.azure_deployment:
-            from openai import AzureOpenAI  # type: ignore
-
-            client = AzureOpenAI(
-                api_version=self.azure_api_version,
-                azure_endpoint=self.azure_endpoint,
-                api_key=self.azure_api_key,
-            )
-            response = client.chat.completions.create(
+            result = self._chat_with_azure(
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_message},
                 ],
                 temperature=0.2,
-                model=self.azure_deployment,
             )
-            reply = response.choices[0].message.content or ""
-            usage = getattr(response, "usage", None)
-            tokens = {
-                "prompt_tokens": getattr(usage, "prompt_tokens", None) or 0,
-                "completion_tokens": getattr(usage, "completion_tokens", None) or 0,
-            }
-            return {"message": reply, "tokens": tokens}
+            return result
 
         # OpenAI padrão
         from openai import OpenAI  # type: ignore
@@ -93,25 +81,8 @@ class OpenAIService:
 
         # Azure OpenAI preferencial
         if self.azure_endpoint and self.azure_api_key and self.azure_deployment:
-            from openai import AzureOpenAI  # type: ignore
-
-            client = AzureOpenAI(
-                api_version=self.azure_api_version,
-                azure_endpoint=self.azure_endpoint,
-                api_key=self.azure_api_key,
-            )
-            response = client.chat.completions.create(
-                messages=messages,
-                temperature=temperature,
-                model=self.azure_deployment,
-            )
-            reply = response.choices[0].message.content or ""
-            usage = getattr(response, "usage", None)
-            tokens = {
-                "prompt_tokens": getattr(usage, "prompt_tokens", None) or 0,
-                "completion_tokens": getattr(usage, "completion_tokens", None) or 0,
-            }
-            return {"message": reply, "tokens": tokens}
+            result = self._chat_with_azure(messages=messages, temperature=temperature)
+            return result
 
         # OpenAI padrão
         from openai import OpenAI  # type: ignore
@@ -151,4 +122,47 @@ class OpenAIService:
 
         result = self.chat_completion(messages, temperature=0.2)
         return result.get("message", "")
+
+    # ===== Helpers internos =====
+    def _create_azure_client(self):
+        from openai import AzureOpenAI  # type: ignore
+
+        return AzureOpenAI(
+            api_version=self.azure_api_version,
+            azure_endpoint=self.azure_endpoint,
+            api_key=self.azure_api_key,
+        )
+
+    def _chat_with_azure(self, messages: List[Dict[str, str]], temperature: float = 0.2) -> Dict[str, Any]:
+        """
+        Chama Azure OpenAI com pequena política de retry e logs de erro básicos.
+        Retorna { message, tokens }.
+        """
+        if not (self.azure_endpoint and self.azure_api_key and self.azure_deployment):
+            raise RuntimeError("Azure OpenAI não configurado")
+
+        last_error: Optional[Exception] = None
+        for attempt in range(2):  # 2 tentativas rápidas
+            try:
+                client = self._create_azure_client()
+                response = client.chat.completions.create(
+                    messages=messages,
+                    temperature=temperature,
+                    model=self.azure_deployment,
+                )
+                reply = response.choices[0].message.content or ""
+                usage = getattr(response, "usage", None)
+                tokens = {
+                    "prompt_tokens": getattr(usage, "prompt_tokens", None) or 0,
+                    "completion_tokens": getattr(usage, "completion_tokens", None) or 0,
+                }
+                return {"message": reply, "tokens": tokens}
+            except Exception as e:
+                # Log mínimo para diagnóstico em dev; não interrompe UX (router trata fallback)
+                print(f"[AzureOpenAI][attempt={attempt+1}] erro: {e}")
+                last_error = e
+
+        # Se falhar após as tentativas, propagar para o router fazer fallback
+        assert last_error is not None
+        raise last_error
 

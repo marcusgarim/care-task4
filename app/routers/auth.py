@@ -151,7 +151,8 @@ def register(payload: RegisterIn, db = Depends(get_db)):
                     "INSERT INTO users (email, password_hash, full_name) VALUES (%s, %s, %s) RETURNING id",
                     (payload.email, password_hash, payload.full_name),
                 )
-                user_id = cur.fetchone()[0]
+                row = cur.fetchone()
+                user_id = row["id"] if isinstance(row, dict) else row[0]
         else:
             with db.cursor() as cur:
                 cur.execute("SELECT 1 FROM users WHERE email=%s", (payload.email,))
