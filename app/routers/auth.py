@@ -53,26 +53,25 @@ def get_current_user(
     request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_security),
 ) -> Dict:
-    """Obtém o usuário atual a partir do Authorization: Bearer ou cookie HttpOnly.
+    """Obtém o usuário atual a partir do Authorization: Bearer OU cookie HttpOnly.
 
-    Retorna o payload do JWT se válido, ou lança HTTP 401 caso contrário.
+    Tenta validar Bearer; se falhar, tenta o cookie `app_token` antes de retornar 401.
     """
-    token: Optional[str] = None
+    header_token: Optional[str] = None
     if credentials and credentials.scheme and credentials.scheme.lower() == "bearer":
-        token = credentials.credentials
-    if not token:
-        token = request.cookies.get("app_token")
-    if not token:
-        raise HTTPException(status_code=401, detail="Não autenticado")
+        header_token = credentials.credentials
+    cookie_token: Optional[str] = request.cookies.get("app_token")
 
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        email = payload.get("sub")
-        if not email:
-            raise HTTPException(status_code=401, detail="Token inválido")
-        return payload
-    except Exception:
-        raise HTTPException(status_code=401, detail="Token inválido")
+    for candidate in [header_token, cookie_token]:
+        if not candidate:
+            continue
+        try:
+            payload = jwt.decode(candidate, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            if payload.get("sub"):
+                return payload
+        except Exception:
+            continue
+    raise HTTPException(status_code=401, detail="Não autenticado")
 class RegisterIn(BaseModel):
     email: str
     password: str
@@ -97,9 +96,7 @@ def _verify_password(plain: str, hashed: str) -> bool:
 
 
 def _ensure_users_table(conn) -> None:
-    """Cria tabela users se não existir (campos mínimos).
-    Usa PostgreSQL quando disponível; ignora em MySQL se não necessário.
-    """
+    """Cria tabela users se não existir e adiciona colunas de admin/ativo."""
     try:
         if is_postgres_connection(conn):
             with conn.cursor() as cur:  # type: ignore[attr-defined]
@@ -110,10 +107,21 @@ def _ensure_users_table(conn) -> None:
                       email VARCHAR(255) UNIQUE NOT NULL,
                       password_hash VARCHAR(255) NOT NULL,
                       full_name VARCHAR(255) NULL,
+                      google_id VARCHAR(255) NULL,
+                      photo_url VARCHAR(512) NULL,
+                      is_admin BOOLEAN DEFAULT FALSE,
+                      ativo BOOLEAN DEFAULT TRUE,
+                      last_access TIMESTAMP NULL,
                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                     """
                 )
+                # Adicionar colunas se necessário
+                cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255)")
+                cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS photo_url VARCHAR(512)")
+                cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE")
+                cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS ativo BOOLEAN DEFAULT TRUE")
+                cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_access TIMESTAMP NULL")
         else:
             with conn.cursor() as cur:
                 cur.execute(
@@ -123,10 +131,27 @@ def _ensure_users_table(conn) -> None:
                       email VARCHAR(255) UNIQUE NOT NULL,
                       password_hash VARCHAR(255) NOT NULL,
                       full_name VARCHAR(255) NULL,
+                      google_id VARCHAR(255) NULL,
+                      photo_url VARCHAR(512) NULL,
+                      is_admin TINYINT(1) DEFAULT 0,
+                      ativo TINYINT(1) DEFAULT 1,
+                      last_access TIMESTAMP NULL,
                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
                     """
                 )
+                # Tentar adicionar colunas (compatibilidade)
+                for stmt in [
+                    "ALTER TABLE users ADD COLUMN google_id VARCHAR(255)",
+                    "ALTER TABLE users ADD COLUMN photo_url VARCHAR(512)",
+                    "ALTER TABLE users ADD COLUMN is_admin TINYINT(1) DEFAULT 0",
+                    "ALTER TABLE users ADD COLUMN ativo TINYINT(1) DEFAULT 1",
+                    "ALTER TABLE users ADD COLUMN last_access TIMESTAMP NULL",
+                ]:
+                    try:
+                        cur.execute(stmt)
+                    except Exception:
+                        pass
     except Exception:
         pass
 
@@ -180,25 +205,49 @@ def login(payload: LoginIn, db = Depends(get_db)):
     try:
         if is_postgres_connection(db):
             with db.cursor() as cur:  # type: ignore[attr-defined]
-                cur.execute("SELECT id, email, password_hash, full_name FROM users WHERE email=%s", (payload.email,))
+                cur.execute("SELECT id, email, password_hash, full_name, is_admin, ativo FROM users WHERE email=%s", (payload.email,))
                 row = cur.fetchone()
         else:
             with db.cursor() as cur:
-                cur.execute("SELECT id, email, password_hash, full_name FROM users WHERE email=%s", (payload.email,))
+                cur.execute("SELECT id, email, password_hash, full_name, is_admin, ativo FROM users WHERE email=%s", (payload.email,))
                 row = cur.fetchone()
         if not row:
             raise HTTPException(status_code=401, detail="Credenciais inválidas")
         password_hash = row["password_hash"] if isinstance(row, dict) else row[2]
+        is_admin_val = row["is_admin"] if isinstance(row, dict) else row[4]
+        ativo_val = row["ativo"] if isinstance(row, dict) else row[5]
+        if not (ativo_val in (True, 1)):
+            raise HTTPException(status_code=403, detail="Usuário inativo")
         if not _verify_password(payload.password, password_hash):
             raise HTTPException(status_code=401, detail="Credenciais inválidas")
         full_name = row["full_name"] if isinstance(row, dict) else row[3]
+        # Atualiza last_access (best-effort)
+        try:
+            with db.cursor() as cur2:
+                cur2.execute("UPDATE users SET last_access = CURRENT_TIMESTAMP WHERE email=%s", (payload.email,))
+        except Exception:
+            pass
     except HTTPException:
         raise
     except Exception:
         raise HTTPException(status_code=500, detail="Erro ao autenticar")
 
     token = create_access_token({"sub": payload.email, "name": full_name, "provider": "local"})
-    return JSONResponse(content={"success": True, "token": token, "user": {"email": payload.email, "name": full_name}})
+    resp = JSONResponse(content={"success": True, "token": token, "user": {"email": payload.email, "name": full_name, "is_admin": bool(is_admin_val), "ativo": bool(ativo_val)}})
+    # Também grava cookie HttpOnly para facilitar validação via navegador
+    try:
+        resp.set_cookie(
+            key="app_token",
+            value=token,
+            httponly=True,
+            secure=False,
+            samesite="lax",
+            max_age=JWT_EXPIRE_MINUTES * 60,
+            path="/",
+        )
+    except Exception:
+        pass
+    return resp
 
 
 
@@ -371,15 +420,218 @@ async def google_callback(code: Optional[str] = None, error: Optional[str] = Non
 
 @router.get("/me")
 async def me(user: Dict = Depends(get_current_user)):
+    """Retorna dados do usuário incluindo is_admin e ativo vindos do DB."""
+    email = user.get("sub")
+    is_admin_val = False
+    ativo_val = True
+    try:
+        db = next(get_db())  # type: ignore
+        with db.cursor() as cur:
+            cur.execute("SELECT is_admin, ativo FROM users WHERE email=%s", (email,))
+            row = cur.fetchone()
+            if row:
+                if isinstance(row, dict):
+                    is_admin_val = bool(row.get("is_admin", False))
+                    ativo_val = bool(row.get("ativo", True))
+                else:
+                    is_admin_val = bool(row[0])
+                    ativo_val = bool(row[1])
+    except Exception:
+        pass
     return JSONResponse(content={
         "success": True,
         "user": {
-            "email": user.get("sub"),
+            "email": email,
             "name": user.get("name"),
             "picture": user.get("picture"),
             "provider": user.get("provider"),
+            "is_admin": is_admin_val,
+            "ativo": ativo_val,
         }
     })
+
+
+def verify_admin_user(user: Dict = Depends(get_current_user), db = Depends(get_db)) -> Dict:
+    """Middleware/Dependency para exigir admin ativo."""
+    email = user.get("sub")
+    try:
+        with db.cursor() as cur:
+            cur.execute("SELECT is_admin, ativo FROM users WHERE email=%s", (email,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=403, detail="Acesso negado")
+            is_admin_flag = (row.get("is_admin") if isinstance(row, dict) else row[0])
+            ativo_flag = (row.get("ativo") if isinstance(row, dict) else row[1])
+            if not (ativo_flag in (True, 1)):
+                raise HTTPException(status_code=403, detail="Usuário inativo")
+            if not (is_admin_flag in (True, 1)):
+                raise HTTPException(status_code=403, detail="Requer administrador")
+            return user
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=403, detail="Acesso negado")
+
+
+@router.get("/is-admin")
+async def is_admin_endpoint(_: Dict = Depends(verify_admin_user)):
+    return JSONResponse(content={"success": True, "is_admin": True})
+
+
+@router.get("/check-auth")
+async def check_auth(request: Request):
+    """Verifica se o usuário está autenticado sem exigir token válido"""
+    try:
+        # Usa o método interno para verificar autenticação sem lançar exceção
+        header_token = None
+        auth_header = request.headers.get("authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            header_token = auth_header.split(" ", 1)[1]
+        cookie_token = request.cookies.get("app_token")
+
+        user = None
+        for candidate in [header_token, cookie_token]:
+            if not candidate:
+                continue
+            try:
+                payload = jwt.decode(candidate, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+                if payload.get("sub"):
+                    user = payload
+                    break
+            except Exception:
+                continue
+        
+        if not user:
+            return JSONResponse(content={
+                "success": True,
+                "authenticated": False,
+                "user": None
+            })
+            
+        email = user.get("sub")
+        
+        # Busca dados atualizados do usuário no DB
+        is_admin_val = False
+        ativo_val = True
+        full_name = user.get("name")
+        
+        try:
+            db_gen = get_db()
+            db = next(db_gen)
+            try:
+                with db.cursor() as cur:
+                    cur.execute("SELECT full_name, is_admin, ativo FROM users WHERE email=%s", (email,))
+                    row = cur.fetchone()
+                    if row:
+                        if isinstance(row, dict):
+                            full_name = row.get("full_name") or user.get("name")
+                            is_admin_val = bool(row.get("is_admin", False))
+                            ativo_val = bool(row.get("ativo", True))
+                        else:
+                            full_name = row[0] or user.get("name")
+                            is_admin_val = bool(row[1])
+                            ativo_val = bool(row[2])
+                            
+            finally:
+                try:
+                    db.close()
+                except Exception:
+                    pass
+        except Exception as e:
+            pass
+            
+        return JSONResponse(content={
+            "success": True,
+            "authenticated": True,
+            "user": {
+                "email": email,
+                "name": full_name,
+                "picture": user.get("picture"),
+                "provider": user.get("provider"),
+                "is_admin": is_admin_val,
+                "ativo": ativo_val,
+            }
+        })
+    except HTTPException:
+        return JSONResponse(content={
+            "success": True,
+            "authenticated": False,
+            "user": None
+        })
+
+
+@router.get("/check-admin")
+async def check_admin(request: Request):
+    """Verifica se o usuário está autenticado E tem permissão de admin"""
+    try:
+        # Usa o método interno para verificar autenticação sem lançar exceção
+        header_token = None
+        auth_header = request.headers.get("authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            header_token = auth_header.split(" ", 1)[1]
+        cookie_token = request.cookies.get("app_token")
+
+        user = None
+        for candidate in [header_token, cookie_token]:
+            if not candidate:
+                continue
+            try:
+                payload = jwt.decode(candidate, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+                if payload.get("sub"):
+                    user = payload
+                    break
+            except Exception:
+                continue
+        
+        if not user:
+            return JSONResponse(content={
+                "success": False,
+                "authenticated": False,
+                "is_admin": False
+            }, status_code=403)
+            
+        email = user.get("sub")
+        
+        # Verifica no DB se é admin e ativo
+        try:
+            db_gen = get_db()
+            db = next(db_gen)
+            try:
+                with db.cursor() as cur:
+                    cur.execute("SELECT is_admin, ativo FROM users WHERE email=%s", (email,))
+                    row = cur.fetchone()
+                    if not row:
+                        raise HTTPException(status_code=403, detail="Usuário não encontrado")
+                        
+                    is_admin_flag = (row.get("is_admin") if isinstance(row, dict) else row[0])
+                    ativo_flag = (row.get("ativo") if isinstance(row, dict) else row[1])
+                    
+                    if not (ativo_flag in (True, 1)):
+                        raise HTTPException(status_code=403, detail="Usuário inativo")
+                    if not (is_admin_flag in (True, 1)):
+                        raise HTTPException(status_code=403, detail="Acesso negado")
+                        
+                    return JSONResponse(content={
+                        "success": True,
+                        "authenticated": True,
+                        "is_admin": True
+                    })
+            finally:
+                try:
+                    db.close()
+                except Exception:
+                    pass
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(status_code=403, detail="Erro ao verificar permissões")
+            
+    except HTTPException:
+        return JSONResponse(content={
+            "success": False,
+            "authenticated": False,
+            "is_admin": False
+        }, status_code=403)
 
 
 @router.post("/logout")

@@ -21,22 +21,75 @@ function authHeaders() {
 
 async function ensureAuthenticated() {
   try {
-    var res = await fetch(apiBase() + '/auth/me', {
+    // Primeiro verifica se está autenticado
+    var checkAuthRes = await fetch(apiBase() + '/auth/check-auth', {
       method: 'GET',
       credentials: 'include',
       headers: authHeaders()
     });
-    if (!res.ok) throw new Error('unauthorized');
-    var data = await res.json();
-    var ui = document.querySelector('.user-info span');
-    if (ui && data && data.user && (data.user.name || data.user.email)) {
-      ui.textContent = data.user.name || data.user.email;
+    
+    if (!checkAuthRes.ok) {
+      throw new Error('unauthorized');
     }
+    
+    var authData = await checkAuthRes.json();
+    
+    if (!authData.success || !authData.authenticated || !authData.user) {
+      // Não está logado - redireciona para login
+      window.location.href = 'login.html';
+      return false;
+    }
+    
+    // Atualiza info do usuário na interface
+    var ui = document.querySelector('.user-info span');
+    if (ui && authData.user && (authData.user.name || authData.user.email)) {
+      ui.textContent = authData.user.name || authData.user.email;
+    }
+    
+    // Verifica se tem permissão de admin
+    if (!(authData.user.is_admin === true || authData.user.is_admin === 1)) {
+      renderAccessDenied();
+      return false;
+    }
+    
+    // Verifica especificamente o endpoint de admin para dupla verificação
+    var checkAdminRes = await fetch(apiBase() + '/auth/check-admin', {
+      method: 'GET',
+      credentials: 'include',
+      headers: authHeaders()
+    });
+    
+    if (!checkAdminRes.ok) {
+      renderAccessDenied();
+      return false;
+    }
+    
+    var adminData = await checkAdminRes.json();
+    if (!adminData.success || !adminData.is_admin) {
+      renderAccessDenied();
+      return false;
+    }
+    
     return true;
   } catch (e) {
-    window.location.href = '/login.html';
+    window.location.href = 'login.html';
     return false;
   }
+}
+
+function renderAccessDenied() {
+  var content = document.querySelector('.content-area');
+  if (!content) return;
+  content.innerHTML = '' +
+    '<div style="display:flex;align-items:center;justify-content:center;height:calc(100vh - 64px);">' +
+    '  <div style="max-width:520px;text-align:center;padding:24px;">' +
+    '    <h1 style="margin:0 0 8px 0;">Acesso negado</h1>' +
+    '    <p style="color:#666;margin:0 0 16px 0;">Sua conta não possui permissão de administrador para acessar este painel.</p>' +
+    '    <div style="display:flex;gap:12px;justify-content:center;">' +
+    '      <a href="index.html" class="header-btn">Voltar ao chat</a>' +
+    '    </div>' +
+    '  </div>' +
+    '</div>';
 }
 
 function showTab(tabName) {
@@ -92,7 +145,7 @@ function showToast(message, type) {
   setTimeout(function(){ toast.classList.remove('show'); }, 3000);
 }
 
-function goToChat() { window.location.href = '/index.html'; }
+function goToChat() { window.location.href = 'index.html'; }
 function logout() {
   if (!confirm('Deseja realmente sair?')) return;
   fetch(apiBase() + '/auth/logout', {
@@ -102,8 +155,12 @@ function logout() {
   })
   .catch(function(){})
   .finally(function(){
-    try { if (window.CONFIG) window.CONFIG.AUTH_TOKEN = null; } catch(e){}
-    window.location.href = '/login.html';
+    // Limpa token local
+    try { 
+      localStorage.removeItem('app_token');
+      if (window.CONFIG) window.CONFIG.AUTH_TOKEN = null; 
+    } catch(e){}
+    window.location.href = 'login.html';
   });
 }
 

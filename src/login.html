@@ -120,7 +120,7 @@
             Entrar com Google
         </button>
 
-        <a class="alt-link" href="/">Voltar ao chat</a>
+        <a class="alt-link" href="index.html">Voltar ao chat</a>
     </main>
 
     <script>
@@ -166,7 +166,19 @@
                 var data = await res.json();
                 if (!res.ok || !data.success) throw new Error(data.error || 'Falha no login');
                 saveToken(data.token);
-                window.location.href = '/panel.html#dashboard';
+                // Decide destino conforme perfil admin
+                try {
+                    var me = await fetch((window.CONFIG.API_BASE || '') + '/auth/me', {
+                        method: 'GET', credentials: 'include', headers: (window.CONFIG && window.CONFIG.AUTH_TOKEN) ? { 'Authorization': 'Bearer ' + window.CONFIG.AUTH_TOKEN } : {}
+                    });
+                    if (me.ok) {
+                        var meData = await me.json();
+                        var isAdmin = !!(meData && meData.user && (meData.user.is_admin === true || meData.user.is_admin === 1));
+                        window.location.href = isAdmin ? 'panel.html#dashboard' : 'index.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                } catch(e) { window.location.href = 'index.html'; }
             } catch(err) {
                 msg.textContent = err.message || 'Erro ao autenticar';
             } finally { setLoading(document.getElementById('loginBtn'), false); }
@@ -188,7 +200,19 @@
                 var data = await res.json();
                 if (!res.ok || !data.success) throw new Error(data.error || 'Falha no cadastro');
                 saveToken(data.token);
-                window.location.href = '/panel.html#dashboard';
+                // Decide destino conforme perfil admin
+                try {
+                    var me = await fetch((window.CONFIG.API_BASE || '') + '/auth/me', {
+                        method: 'GET', credentials: 'include', headers: (window.CONFIG && window.CONFIG.AUTH_TOKEN) ? { 'Authorization': 'Bearer ' + window.CONFIG.AUTH_TOKEN } : {}
+                    });
+                    if (me.ok) {
+                        var meData = await me.json();
+                        var isAdmin = !!(meData && meData.user && (meData.user.is_admin === true || meData.user.is_admin === 1));
+                        window.location.href = isAdmin ? 'panel.html#dashboard' : 'index.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                } catch(e) { window.location.href = 'index.html'; }
             } catch(err) {
                 msg.textContent = err.message || 'Erro ao cadastrar';
             } finally { setLoading(document.getElementById('registerBtn'), false); }

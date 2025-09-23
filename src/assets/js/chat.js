@@ -55,9 +55,8 @@ function initializeChat() {
     if (clr) clr.addEventListener('click', clearDebugLogs);
     if (exp) exp.addEventListener('click', exportDebugLogs);
     
-    // Panel button (compat: moderno e antigo)
-    var panel = document.getElementById('panelBtn');
-    if (panel) panel.addEventListener('click', openPanel);
+    // Verificação automática de autenticação
+    checkAuthenticationStatus();
     
     // Botoes de nova conversa
     addNewConversationButton();
@@ -530,14 +529,109 @@ function openPanel() {
             ...(window.CONFIG && window.CONFIG.AUTH_TOKEN ? { 'Authorization': `Bearer ${window.CONFIG.AUTH_TOKEN}` } : {})
         }
     })
-    .then(function(res){
-        if (res.ok) {
-            window.location.href = 'panel.html';
-        } else {
+    .then(async function(res){
+        if (!res.ok) {
+            // Não autenticado: enviar ao login
+            window.location.href = 'login.html';
+            return;
+        }
+        try {
+            const data = await res.json();
+            const isAdmin = !!(data && data.user && (data.user.is_admin === true || data.user.is_admin === 1));
+            if (isAdmin) {
+                window.location.href = 'panel.html';
+            } else {
+                addDebugLog('Acesso ao painel negado (não-admin)', data);
+                alert('Você não tem permissão de administrador para acessar o painel.');
+            }
+        } catch(e) {
             window.location.href = 'login.html';
         }
     })
     .catch(function(){ window.location.href = 'login.html'; });
+}
+
+function checkAuthenticationStatus() {
+    const API_BASE = (window.CONFIG && window.CONFIG.API_BASE) ? window.CONFIG.API_BASE : 'http://127.0.0.1:8000/api';
+    const authBtn = document.getElementById('authBtn');
+    if (!authBtn) return;
+
+    // Estado inicial: Entrar
+    authBtn.textContent = 'Entrar';
+    authBtn.onclick = function(){ window.location.href = 'login.html'; };
+
+    // Verifica se o usuário está autenticado
+    fetch(`${API_BASE}/auth/check-auth`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+            ...(window.CONFIG && window.CONFIG.AUTH_TOKEN ? { 'Authorization': `Bearer ${window.CONFIG.AUTH_TOKEN}` } : {})
+        }
+    })
+    .then(async function(res){
+        if (!res.ok) return; // Mantém Entrar se não conseguir verificar
+        const data = await res.json();
+        
+        if (data.success && data.authenticated && data.user) {
+            // Usuário está logado
+            const user = data.user;
+            const isAdmin = !!(user.is_admin === true || user.is_admin === 1);
+            
+            if (isAdmin) {
+                // Usuário admin: mostra nome + botão Painel Admin
+                authBtn.textContent = `${user.name || user.email} - Painel Admin`;
+                authBtn.onclick = function() { window.location.href = 'panel.html'; };
+            } else {
+                // Usuário comum: mostra apenas nome
+                authBtn.textContent = user.name || user.email;
+                authBtn.onclick = function() {
+                    // Futuramente pode abrir menu de usuário com logout
+                    if (confirm('Deseja fazer logout?')) {
+                        logout();
+                    }
+                };
+            }
+        } else {
+            // Usuário não está logado: mantém botão Entrar
+            authBtn.textContent = 'Entrar';
+            authBtn.onclick = function(){ window.location.href = 'login.html'; };
+        }
+    })
+    .catch(function(){ 
+        // Em caso de erro, mantém o botão Entrar
+        authBtn.textContent = 'Entrar';
+        authBtn.onclick = function(){ window.location.href = 'login.html'; };
+    });
+}
+
+function logout() {
+    const API_BASE = (window.CONFIG && window.CONFIG.API_BASE) ? window.CONFIG.API_BASE : 'http://127.0.0.1:8000/api';
+    
+    fetch(`${API_BASE}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+            ...(window.CONFIG && window.CONFIG.AUTH_TOKEN ? { 'Authorization': `Bearer ${window.CONFIG.AUTH_TOKEN}` } : {})
+        }
+    })
+    .then(function() {
+        // Limpa token local
+        try {
+            localStorage.removeItem('app_token');
+            if (window.CONFIG) window.CONFIG.AUTH_TOKEN = null;
+        } catch(e) {}
+        
+        // Atualiza interface
+        checkAuthenticationStatus();
+    })
+    .catch(function() {
+        // Mesmo se falhar a requisição, limpa localmente
+        try {
+            localStorage.removeItem('app_token');
+            if (window.CONFIG) window.CONFIG.AUTH_TOKEN = null;
+        } catch(e) {}
+        checkAuthenticationStatus();
+    });
 }
 
 function bindModernLayout() {

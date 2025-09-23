@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from ...core.db import get_db, is_postgres_connection
-from ..auth import get_current_user
+from ..auth import verify_admin_user
 
-router = APIRouter(prefix="/panel", tags=["panel-faq"], dependencies=[Depends(get_current_user)])
+router = APIRouter(prefix="/panel", tags=["panel-faq"], dependencies=[Depends(verify_admin_user)])
 
 @router.get("/faq")
 async def listar_faq(db = Depends(get_db)):

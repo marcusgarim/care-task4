@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from ...core.db import get_db, is_postgres_connection
-from ..auth import get_current_user
+from ..auth import verify_admin_user
 
-router = APIRouter(prefix="/panel", tags=["panel-profissionais"], dependencies=[Depends(get_current_user)])
+router = APIRouter(prefix="/panel", tags=["panel-profissionais"], dependencies=[Depends(verify_admin_user)])
 
 @router.get("/profissionais")
 async def listar_profissionais(db = Depends(get_db)):

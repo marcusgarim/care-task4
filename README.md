@@ -440,6 +440,27 @@ fetch(`${API_BASE}/panel/profissionais`, {
 
 ## Configuração e Execução
 
+### 0. Pré‑requisitos
+
+- Python 3.10+ instalado no sistema (recomendado 3.11+)
+- Acesso a um banco de dados (PostgreSQL recomendado; MySQL funciona como fallback)
+- (Opcional) Chave da OpenAI ou Azure OpenAI para evitar respostas "mock"
+
+### Início Rápido (recomendado para desenvolvimento)
+
+Use o script de desenvolvimento para configurar tudo automaticamente (ambiente virtual, dependências, bootstrap opcional do banco, backend e frontend):
+
+```bash
+bash scripts/dev.sh
+```
+
+URLs:
+- Backend: `http://127.0.0.1:8000`
+- Chat: `http://127.0.0.1:5500/index.html`
+- Painel: `http://127.0.0.1:5500/panel.html`
+
+Se aparecer "uvicorn: command not found", o `scripts/dev.sh` já resolve isso ao criar/ativar o venv e instalar dependências.
+
 ### 1. Dependências do Sistema
 
 #### Python Requirements (requirements.txt)
@@ -552,6 +573,8 @@ python3 -m http.server 5500 -d src
 # Acessar: http://127.0.0.1:5500/index.html
 ```
 
+Observação: preferencialmente use `bash scripts/dev.sh` para evitar problemas de ambiente.
+
 ## API Endpoints Disponíveis
 
 ### Chat e Feedback
@@ -578,6 +601,12 @@ python3 -m http.server 5500 -d src
 - **POST `/api/auth/google`**: Recebe `credential` (id_token) ou `access_token` e retorna JWT
 - **GET `/api/auth/google/login`**: Inicia login Google (redirect)
 - **GET `/api/auth/google/callback`**: Callback do Google; seta cookie `app_token` e redireciona ao frontend
+
+Fluxo de login (Google):
+1. Configure no `.env` os campos `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` e `GOOGLE_REDIRECT_URI`.
+2. Abra `src/login.html` e clique em "Entrar com Google".
+3. Após o callback, um cookie `app_token` é definido e o endpoint `/api/auth/me` passa a retornar seus dados.
+4. Regras de admin: o primeiro usuário que fizer login vira admin automaticamente. Usuários inativos não acessam o painel.
 
 ### Características das APIs
 - **Validação automática**: Schemas Pydantic garantem dados corretos
@@ -639,12 +668,26 @@ window.CONFIG = {
 5. **Configuração flexível** via variáveis de ambiente
 6. **Documentação abrangente** facilita manutenção
 
+### Troubleshooting (erros comuns)
+
+- "O chat responde com (mock) Você disse...":
+  - Falta de configuração da IA. Defina `OPENAI_API_KEY` (ou Azure: `AZURE_OPENAI_*`) no `.env` e reinicie o backend.
+
+- "Não consigo acessar o painel":
+  - Faça login em `src/login.html` (Google OAuth). O primeiro login vira admin automaticamente.
+  - Verifique no banco a tabela `usuarios`. Para promover manualmente: `UPDATE usuarios SET is_admin=TRUE, ativo=TRUE WHERE email='seu_email';`
+
+- "uvicorn: command not found":
+  - Use `bash scripts/dev.sh`, que cria o venv e instala `uvicorn` automaticamente.
+
+- "401/403 nas rotas do painel":
+  - Verifique se o cookie `app_token` está presente (ou envie o header `Authorization: Bearer <token>`), se o usuário está `ativo` e se possui `is_admin=TRUE`.
+
 ### Próximos Passos Recomendados
-1. **Aplicar autenticação** no painel administrativo (integrar login Google ao fluxo)
-2. **Sistema de logs centralizados** (ELK Stack ou similar)
-3. **Testes automatizados** (pytest para backend, Jest para frontend)
-4. **CI/CD pipeline** para deploy automático
-5. **Monitoramento de aplicação** (Prometheus + Grafana)
-6. **Containerização** com Docker para facilitar deploys
+1. **Sistema de logs centralizados** (ELK Stack ou similar)
+2. **Testes automatizados** (pytest para backend, Jest para frontend)
+3. **CI/CD pipeline** para deploy automático
+4. **Monitoramento de aplicação** (Prometheus + Grafana)
+5. **Containerização** com Docker para facilitar deploys
 
 **Tecnologias utilizadas**: FastAPI, Python, PostgreSQL/MySQL, OpenAI/Azure OpenAI, HTML5, CSS3, JavaScript ES6+.
