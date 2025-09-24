@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from ...core.db import get_db, is_postgres_connection
 from ..auth import verify_admin_user
 
@@ -11,7 +12,7 @@ async def listar_parceiros(db = Depends(get_db)):
         with db.cursor() as cur:
             cur.execute("SELECT * FROM parceiros ORDER BY nome")
             parceiros = cur.fetchall()
-            return JSONResponse(content={"success": True, "parceiros": parceiros})
+            return JSONResponse(content=jsonable_encoder({"success": True, "parceiros": parceiros}))
     except Exception:
         return JSONResponse(content={"error": "Erro na conexão com banco de dados"}, status_code=500)
 
