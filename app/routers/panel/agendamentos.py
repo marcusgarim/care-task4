@@ -3,8 +3,11 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from typing import Annotated, List, Optional
 from psycopg import Connection
-from datetime import datetime, time, date, timedelta
+from datetime import datetime, time, date, timedelta, date as date_type
 import logging
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+import pytz
 
 from ...core.db import get_db
 from ...services.calendar_integration import CalendarIntegration
@@ -124,3 +127,81 @@ async def status_agenda():
             "status": "Conectado - Smart Test ativa"
         }
     })
+
+@router.post("/agendamentos/google-calendar")
+async def criar_agendamento_google_calendar(request: Request):
+    """Cria agendamento sincronizado com Google Calendar Smart Test"""
+    try:
+        data = await request.json()
+        
+        # Validar campos obrigatórios
+        required_fields = ["data_consulta", "hora_inicio", "hora_fim", "titulo"]
+        for field in required_fields:
+            if not data.get(field):
+                return JSONResponse(
+                    content={"success": False, "message": f"Campo '{field}' é obrigatório"},
+                    status_code=400
+                )
+        
+        # Carregar token
+        creds = Credentials.from_authorized_user_file('/Users/marcusgarim/Documents/careintelligence/care-task4/scripts/token_suporte.json')
+        service = build('calendar', 'v3', credentials=creds)
+        
+        # Preparar dados do evento
+        data_consulta = data['data_consulta']
+        hora_inicio = data['hora_inicio']
+        hora_fim = data['hora_fim']
+        titulo = data['titulo']
+        descricao = data.get('descricao', '')
+        cliente_nome = data.get('cliente_nome', '')
+        cliente_email = data.get('cliente_email', '')
+        
+        # Criar datetime para o evento
+        tz = pytz.timezone('America/Sao_Paulo')
+        start_datetime = tz.localize(datetime.combine(
+            date_type.fromisoformat(data_consulta),
+            datetime.strptime(hora_inicio, '%H:%M').time()
+        ))
+        end_datetime = tz.localize(datetime.combine(
+            date_type.fromisoformat(data_consulta),
+            datetime.strptime(hora_fim, '%H:%M').time()
+        ))
+        
+        # Criar evento no Google Calendar
+        calendar_id = 'c_e61ace7a78718aa82e52a67ffeaa756cf39650eb27641ff29968048d97a9a4db@group.calendar.google.com'
+        
+        event = {
+            'summary': titulo,
+            'description': f"{descricao}\n\nCliente: {cliente_nome}\nEmail: {cliente_email}",
+            'start': {
+                'dateTime': start_datetime.isoformat(),
+                'timeZone': 'America/Sao_Paulo',
+            },
+            'end': {
+                'dateTime': end_datetime.isoformat(),
+                'timeZone': 'America/Sao_Paulo',
+            },
+        }
+        
+        created_event = service.events().insert(calendarId=calendar_id, body=event).execute()
+        
+        return JSONResponse(content=jsonable_encoder({
+            "success": True,
+            "message": "Agendamento criado com sucesso no Google Calendar",
+            "event_id": created_event['id'],
+            "event_url": created_event.get('htmlLink'),
+            "agendamento": {
+                "titulo": titulo,
+                "data_consulta": data_consulta,
+                "hora_inicio": hora_inicio,
+                "hora_fim": hora_fim,
+                "cliente_nome": cliente_nome,
+                "cliente_email": cliente_email
+            }
+        }))
+        
+    except Exception as e:
+        return JSONResponse(
+            content={"success": False, "message": f"Erro ao criar agendamento: {str(e)}"},
+            status_code=500
+        )

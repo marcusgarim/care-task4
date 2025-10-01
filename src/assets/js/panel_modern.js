@@ -1124,9 +1124,16 @@ function abrirModalNovoAgendamentoCalendar(datetime = null) {
   var defaultTime = '';
   
   if (datetime) {
-    var date = new Date(datetime);
-    defaultDate = date.toISOString().split('T')[0];
-    defaultTime = date.toTimeString().substring(0, 5);
+    try {
+      var date = new Date(datetime);
+      // Verificar se a data é válida
+      if (!isNaN(date.getTime())) {
+        defaultDate = date.toISOString().split('T')[0];
+        defaultTime = date.toTimeString().substring(0, 5);
+      }
+    } catch (e) {
+      console.error('Erro ao processar datetime:', e);
+    }
   }
   
   modal.innerHTML = `
@@ -1183,7 +1190,7 @@ function abrirModalNovoAgendamentoCalendar(datetime = null) {
   `;
   
   document.body.appendChild(modal);
-  modal.style.display = 'block';
+  modal.classList.add('active');
   
   // Configurar evento de submit
   document.getElementById('form-agendamento-calendar').addEventListener('submit', async function(e) {
