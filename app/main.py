@@ -70,10 +70,19 @@ def _try_include(router_module_path: str, attr: str = "router") -> None:
 
 _try_include("app.routers.panel.configuracoes")
 _try_include("app.routers.panel.convenios")
-_try_include("app.routers.panel.excecoes")
+# _try_include("app.routers.panel.excecoes")  # Removido - integrado com Google Calendar
 _try_include("app.routers.panel.faq")
-_try_include("app.routers.panel.horarios")
+# _try_include("app.routers.panel.horarios")  # Removido - integrado com Google Calendar
 _try_include("app.routers.panel.pagamentos")
 _try_include("app.routers.panel.parceiros")
 _try_include("app.routers.panel.profissionais")
 _try_include("app.routers.panel.servicos")
+_try_include("app.routers.panel.agendamentos")
+_try_include("app.routers.panel.agenda")
+
+# Agendamento
+_try_include("app.routers.agendamento")
+_try_include("app.routers.clientes")
+
+# Google Calendar
+_try_include("app.routers.google_calendar")

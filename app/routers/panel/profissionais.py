@@ -1,65 +1,117 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from ...core.db import get_db, is_postgres_connection
-from ..auth import verify_admin_user
 from ...schemas.panel import ProfissionalCreate, ProfissionalUpdate
+from ...services.calendar_integration import CalendarIntegration
+import logging
 
-router = APIRouter(prefix="/panel", tags=["panel-profissionais"], dependencies=[Depends(verify_admin_user)])
+router = APIRouter(prefix="/panel", tags=["panel-profissionais"])
 
 @router.get("/profissionais")
 async def listar_profissionais():
+    """Lista profissionais com informações para integração Google Calendar"""
     try:
         db_gen = get_db()
         db = next(db_gen)
         try:
             with db.cursor() as cur:
-                cur.execute("SELECT * FROM profissionais ORDER BY nome")
-                profissionais = cur.fetchall()
-                return JSONResponse(content=jsonable_encoder({"success": True, "profissionais": profissionais}))
+                # Buscar profissionais com informações extras para Google Calendar
+                cur.execute("""
+                    SELECT 
+                        id, nome, especialidade, crm, ativo, email,
+                        horas_trabalho_semana, created_at, updated_at
+                    FROM profissionais 
+                    ORDER BY nome
+                """)
+                profissionais_raw = cur.fetchall()
+                
+                # Formatear dados para incluir status de integração
+                profissionais = []
+                for p in profissionais_raw:
+                    profissional = {
+                        "id": p["id"],
+                        "nome": p["nome"],
+                        "especialidade": p["especialidade"],
+                        "crm": p["crm"],
+                        "ativo": bool(p["ativo"]),
+                        "email": p.get("email"),
+                        "horas_trabalho_semana": p.get("horas_trabalho_semana"),
+                        "created_at": p["created_at"].isoformat() if p.get("created_at") else None,
+                        "updated_at": p["updated_at"].isoformat() if p.get("updated_at") else None,
+                        "google_calendar_integrated": p.get("email") is not None
+                    }
+                    profissionais.append(profissional)
+                
+                return JSONResponse(content=jsonable_encoder({
+                    "success": True, 
+                    "profissionais": profissionais,
+                    "total": len(profissionais)
+                }))
         finally:
             try:
                 db.close()
             except Exception:
                 pass
     except Exception as e:
+        logging.error(f"Erro ao buscar profissionais: {str(e)}")
         return JSONResponse(content={"success": False, "message": "Erro ao buscar profissionais", "error": str(e)}, status_code=500)
 
 
 @router.post("/profissionais")
 async def criar_profissional(payload: ProfissionalCreate):
+    """Cria profissional com integração Google Calendar"""
     try:
         db_gen = get_db()
         db = next(db_gen)
         try:
             with db.cursor() as cur:
+                # Verificar se email já existe (se fornecido)
+                if payload.email:
+                    cur.execute("SELECT id FROM profissionais WHERE email = %s", (payload.email,))
+                    if cur.fetchone():
+                        return JSONResponse(
+                            content={"success": False, "message": "Email já está em uso"},
+                            status_code=400
+                        )
+                
                 if is_postgres_connection(db):
                     cur.execute(
                         """
-                        INSERT INTO profissionais (nome, especialidade, crm, ativo)
-                        VALUES (%s, %s, %s, %s) RETURNING id
+                        INSERT INTO profissionais 
+                        (nome, especialidade, crm, email, horas_trabalho_semana, ativo)
+                        VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
                         """,
-                        (payload.nome, payload.especialidade, payload.crm, 1 if payload.ativo else 0)
+                        (payload.nome, payload.especialidade, payload.crm, 
+                         payload.email, payload.horas_trabalho_semana, 1 if payload.ativo else 0)
                     )
                     result = cur.fetchone()
                     prof_id = result["id"] if isinstance(result, dict) else result[0]
                 else:
                     cur.execute(
                         """
-                        INSERT INTO profissionais (nome, especialidade, crm, ativo)
-                        VALUES (%s, %s, %s, %s)
+                        INSERT INTO profissionais 
+                        (nome, especialidade, crm, email, horas_trabalho_semana, ativo)
+                        VALUES (%s, %s, %s, %s, %s, %s)
                         """,
-                        (payload.nome, payload.especialidade, payload.crm, 1 if payload.ativo else 0)
+                        (payload.nome, payload.especialidade, payload.crm,
+                         payload.email, payload.horas_trabalho_semana, 1 if payload.ativo else 0)
                     )
                     prof_id = cur.lastrowid
                 
-                return JSONResponse(content={"success": True, "message": "Profissional criado com sucesso", "id": prof_id})
+                return JSONResponse(content={
+                    "success": True, 
+                    "message": "Profissional criado com sucesso", 
+                    "id": prof_id,
+                    "google_calendar_ready": payload.email is not None
+                })
         finally:
             try:
                 db.close()
             except Exception:
                 pass
     except Exception as e:
+        logging.error(f"Erro ao criar profissional: {str(e)}")
         return JSONResponse(content={"success": False, "message": f"Erro ao criar profissional: {str(e)}"}, status_code=500)
 
 
@@ -82,6 +134,12 @@ async def atualizar_profissional(prof_id: int, payload: ProfissionalUpdate):
             if payload.crm is not None:
                 updates.append("crm = %s")
                 values.append(payload.crm)
+            if payload.email is not None:
+                updates.append("email = %s")
+                values.append(payload.email)
+            if payload.horas_trabalho_semana is not None:
+                updates.append("horas_trabalho_semana = %s")
+                values.append(payload.horas_trabalho_semana)
             if payload.ativo is not None:
                 updates.append("ativo = %s")
                 values.append(1 if payload.ativo else 0)

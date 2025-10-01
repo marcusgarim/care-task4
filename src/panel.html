@@ -75,21 +75,20 @@
                         </svg>
                         <span>Convênios</span>
                     </a>
-                    <a class="nav-item" href="#horarios">
+                    <!-- Horários removido - integrado com Google Calendar -->
+                    <a class="nav-item" href="#agendamentos">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <polyline points="12 6 12 12 16 14"/>
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                            <line x1="8" y1="14" x2="16" y2="14"/>
+                            <line x1="8" y1="18" x2="12" y2="18"/>
                         </svg>
-                        <span>Horários</span>
+                        <span>Agendamentos</span>
                     </a>
-                    <a class="nav-item" href="#excecoes">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <line x1="12" y1="8" x2="12" y2="12"/>
-                            <line x1="12" y1="16" x2="12.01" y2="16"/>
-                        </svg>
-                        <span>Exceções</span>
-                    </a>
+                    
+                    <!-- Exceções removido - integrado com Google Calendar -->
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">Configurações</div>
@@ -153,51 +152,130 @@
             <!-- Agenda -->
             <div class="tab-section" id="agenda-tab">
                 <div class="page-header">
-                    <h1 class="page-title">Agenda</h1>
-                    <p class="page-subtitle">Visualizar e gerenciar agendamentos</p>
+                    <h1 class="page-title">Agenda Integrada</h1>
+                    <p class="page-subtitle">Gerenciamento completo da agenda Smart Test</p>
+                </div>
+                
+                <!-- Status da Integração Compacto -->
+                <div class="integration-status-bar" id="calendar-status-bar">
+                    <div class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Verificando conexão...</span>
+                    </div>
+                    <button class="btn-setup" id="btn-setup-calendar" style="display: none;">
+                        Configurar Integração Real
+                    </button>
+                </div>
+                
+                <!-- Layout Principal da Agenda -->
+                <div class="agenda-layout">
+                    <!-- Painel Esquerdo: Controles e Visão Geral -->
+                    <div class="agenda-sidebar">
+                        <!-- Seletor de Data Moderno -->
+                        <div class="date-selector-card">
+                            <div class="date-header">
+                                <h3>Selecionar Data</h3>
+                                <div class="date-navigation">
+                                    <button class="btn-nav" id="btn-prev-day">‹</button>
+                                    <input type="date" id="agenda-data-selector" class="date-input">
+                                    <button class="btn-nav" id="btn-next-day">›</button>
+                                </div>
+                            </div>
+                            <div class="quick-dates">
+                                <button class="quick-date-btn active" data-offset="0">Hoje</button>
+                                <button class="quick-date-btn" data-offset="1">Amanhã</button>
+                                <button class="quick-date-btn" data-offset="2">Depois</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Resumo do Dia -->
+                        <div class="day-summary-card">
+                            <h3>Resumo do Dia</h3>
+                            <div class="summary-stats" id="day-summary">
+                                <div class="stat">
+                                    <span class="stat-number">-</span>
+                                    <span class="stat-label">Disponíveis</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-number">-</span>
+                                    <span class="stat-label">Ocupados</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-number">-</span>
+                                    <span class="stat-label">Total</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Ações Rápidas -->
+                        <div class="quick-actions-card">
+                            <h3>Ações Rápidas</h3>
+                            <div class="action-buttons">
+                                <button class="action-btn primary" id="btn-novo-agendamento-calendar">
+                                    <span class="btn-icon">+</span>
+                                    Novo Agendamento
+                                </button>
+                                <button class="action-btn secondary" id="btn-sync-calendar">
+                                    <span class="btn-icon">🔄</span>
+                                    Sincronizar
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     
-                <div class="calendar-container">
-                    <div class="calendar-header">
-                        <h2 class="table-title">Dezembro 2024</h2>
-                        <div class="calendar-nav">
-                            <button class="btn btn-sm">Anterior</button>
-                            <button class="btn btn-sm">Hoje</button>
-                            <button class="btn btn-sm">Próximo</button>
-                    </div>
-                    </div>
-                    <div class="calendar-placeholder">
-                        <p>Calendário visual será implementado aqui</p>
-                        <p class="hint">Integração com biblioteca de calendário recomendada</p>
-                    </div>
+                    <!-- Painel Central: Grade de Horários -->
+                    <div class="agenda-main">
+                        <!-- Cabeçalho da Grade -->
+                        <div class="schedule-header">
+                            <div class="schedule-title">
+                                <h2 id="selected-date-title">Agenda do Dia</h2>
+                                <span class="schedule-subtitle" id="selected-date-subtitle">Selecione uma data</span>
+                            </div>
+                            <div class="view-controls">
+                                <button class="view-btn active" data-view="timeline">Timeline</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Timeline de Horários -->
+                        <div class="schedule-timeline" id="schedule-timeline">
+                            <div class="timeline-loading">
+                                <div class="loading-spinner"></div>
+                                <p>Carregando horários...</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Grade de Horários (alternativa) -->
+                        <div class="schedule-grid" id="schedule-grid" style="display: none;">
+                            <div id="agenda-disponibilidade">
+                                <div class="loading-state">
+                                    <p>Carregando disponibilidade...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
-                <div class="table-container mt-24">
-                    <div class="table-header">
-                        <h2 class="table-title">Agendamentos do Dia</h2>
-                        <button class="btn btn-primary btn-sm">Novo Agendamento</button>
+                    <!-- Painel Direito: Eventos e Sugestões -->
+                    <div class="agenda-events">
+                        <!-- Eventos do Dia -->
+                        <div class="events-card">
+                            <h3>Eventos Agendados</h3>
+                            <div class="events-list" id="eventos-agendados">
+                                <div class="empty-events">
+                                    <span>Nenhum evento hoje</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Sugestões de Próximos Horários -->
+                        <div class="suggestions-card">
+                            <h3>Próximos Disponíveis</h3>
+                            <div class="suggestions-list" id="proximos-horarios-list">
+                                <div class="loading-suggestions">
+                                    <p>Carregando sugestões...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Horário</th>
-                                <th>Paciente</th>
-                                <th>Profissional</th>
-                                <th>Serviço</th>
-                                <th>Status</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="6">
-                                    <div class="empty-state">
-                                        <p class="empty-text">Nenhum agendamento para hoje</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
                 </div>
             </div>
 
@@ -403,7 +481,103 @@
                 </div>
             </div>
 
+            <!-- Agendamentos -->
+            <div class="tab-section" id="agendamentos-tab">
+                <div class="page-header">
+                    <h1 class="page-title">Agendamentos</h1>
+                    <p class="page-subtitle">Gerenciar consultas e agendamentos</p>
+                </div>
+
+                <div class="form-section">
+                    <h2 class="table-title">Novo Agendamento</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Cliente</label>
+                            <select class="form-select" id="agend_cliente">
+                                <option>Selecione um cliente</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Profissional</label>
+                            <select class="form-select" id="agend_profissional">
+                                <option>Selecione um profissional</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Data</label>
+                            <input type="date" class="form-input" id="agend_data">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Hora Início</label>
+                            <input type="time" class="form-input" id="agend_hora_inicio">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Hora Fim</label>
+                            <input type="time" class="form-input" id="agend_hora_fim">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tipo</label>
+                            <select class="form-select" id="agend_tipo">
+                                <option value="presencial">Presencial</option>
+                                <option value="remoto">Remoto</option>
+                                <option value="hibrido">Híbrido</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Serviço</label>
+                            <select class="form-select" id="agend_servico">
+                                <option>Selecione um serviço</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Observação</label>
+                            <textarea class="form-input" id="agend_observacao" rows="2" placeholder="Observações sobre o agendamento"></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-20">
+                        <button class="btn btn-primary btn-sm" onclick="criarAgendamento()">Criar Agendamento</button>
+                        <button class="btn btn-secondary btn-sm ml-10" onclick="verificarSlots()">Verificar Disponibilidade</button>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2 class="table-title">Agendamentos</h2>
+                        <div class="table-filters">
+                            <input type="date" class="form-input" id="filtro_data_inicio" placeholder="Data início">
+                            <input type="date" class="form-input" id="filtro_data_fim" placeholder="Data fim">
+                            <select class="form-select" id="filtro_status">
+                                <option value="">Todos os status</option>
+                                <option value="0">Agendado</option>
+                                <option value="1">Confirmado</option>
+                                <option value="2">Realizado</option>
+                                <option value="3">Cancelado</option>
+                                <option value="4">Falta</option>
+                            </select>
+                            <button class="btn btn-primary btn-sm" onclick="filtrarAgendamentos()">Filtrar</button>
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Cliente</th>
+                                <th>Profissional</th>
+                                <th>Tipo</th>
+                                <th>Status</th>
+                                <th>Valor</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="7"><div class="empty-state"><p class="empty-text">Carregando agendamentos...</p></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
             
+            
+
             <!-- Exceções -->
             <div class="tab-section" id="excecoes-tab">
                 <div class="page-header">
@@ -829,5 +1003,6 @@
 
     <script src="assets/js/config.js"></script>
     <script src="assets/js/panel_modern.js"></script>
+    <script src="assets/js/agenda_moderna.js"></script>
 </body>
 </html>

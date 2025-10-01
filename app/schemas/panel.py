@@ -23,6 +23,8 @@ class ProfissionalCreate(BaseModel):
     nome: str
     especialidade: Optional[str] = None
     crm: Optional[str] = None
+    email: Optional[str] = None
+    horas_trabalho_semana: Optional[int] = 40
     ativo: Optional[bool] = True
 
 
@@ -30,6 +32,8 @@ class ProfissionalUpdate(BaseModel):
     nome: Optional[str] = None
     especialidade: Optional[str] = None
     crm: Optional[str] = None
+    email: Optional[str] = None
+    horas_trabalho_semana: Optional[int] = None
     ativo: Optional[bool] = None
 
 

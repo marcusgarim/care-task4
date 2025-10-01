@@ -296,6 +296,10 @@ sites/*/private/
 ehthumbs.db
 Thumbs.db
 
+# Ignore .DS_Store globally
+.DS_Store
+**/.DS_Store
+
 # Database files
 *.sql
 *.sqlite
@@ -341,3 +345,11 @@ temp/
 # Ignore any files whose basename ends with `_commented`
 *_commented
 *_commented.*
+
+# Google Calendar API credentials and tokens
+credentials/client_secret_*.json
+token_*.json
+
+# Scripts com credenciais sensíveis
+scripts/demo_token.py
+scripts/setup_real_google_calendar.py
